@@ -10,6 +10,7 @@ import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.network.Network;
 import li.cil.tis3d.common.network.message.CasingInventoryMessage;
 import li.cil.tis3d.common.provider.ModuleProviders;
+import net.createmod.ponder.api.level.PonderLevel;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.WorldlyContainer;
@@ -63,7 +64,7 @@ public final class CasingInventory extends Inventory implements WorldlyContainer
     public void setChanged() {
         blockEntity.setChanged();
         final Level level = blockEntity.getBlockEntityLevel();
-        if (!level.isClientSide()) {
+        if (!level.isClientSide() || level instanceof PonderLevel) {
             BlockState state = blockEntity.getBlockState();
             for (final Face face : Face.VALUES) {
                 final BooleanProperty property = CasingBlock.FACE_TO_PROPERTY.get(face);

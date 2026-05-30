@@ -29,6 +29,7 @@ sourceSets.main.resources {
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
     mavenLocal()
+    maven { url = "https://maven.createmod.net" }
 }
 
 base {
@@ -131,6 +132,12 @@ dependencies {
     // The group id is ignored when searching -- in this case, it is "blank"
     // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
     implementation libs.manual
+    implementation(libs.ponder)
+    jarJar(libs.ponder) {
+        version {
+            prefer(libs.versions.ponder.get())
+        }
+    }
     // Example mod dependency using a file as dependency
     // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
 
@@ -146,15 +153,15 @@ dependencies {
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
-            minecraft_version      : libs.versions.minecraft,
-            minecraft_version_range: minecraft_version_range,
+            minecraft_version      : libs.versions.minecraft.get(),
             neo_version            : "21.1.231",
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
-            manual_version          : libs.versions.manual
+            manual_version         : libs.versions.manual.get(),
+            ponder_version         : libs.versions.ponder.get()
     ]
     inputs.properties replaceProperties
     expand replaceProperties

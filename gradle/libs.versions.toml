@@ -4,9 +4,11 @@ parchment = "2024.11.17"
 moddev = "2.0.141"
 
 manual = "1.3.0"
+ponder = "1.0.69"
 
 [plugins]
 moddev = { id = "net.neoforged.moddev", version.ref = "moddev" }
 
 [libraries]
 manual = { group = "li.cil", name = "MarkdownManual", version.ref = "manual" }
+ponder = { group = "net.createmod.ponder", name = "Ponder-NeoForge-1.21.1", version.ref = "ponder" }
