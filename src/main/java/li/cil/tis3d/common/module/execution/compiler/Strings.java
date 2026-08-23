@@ -13,12 +13,12 @@ public final class Strings {
     public static final Component MESSAGE_LABEL_NOT_FOUND = Component.translatable("tis3d.compiler.label_not_found");
     public static final Component MESSAGE_INVALID_INSTRUCTION = Component.translatable("tis3d.compiler.invalid_instruction");
 
-    public static Component getCompileError(final ParseException e) {
-        return Component.translatable("tis3d.compiler.error", e.getLineNumber(), e.getStart(), e.getEnd(), e.getDisplayMessage());
+    private Strings() {
     }
 
     // --------------------------------------------------------------------- //
 
-    private Strings() {
+    public static Component getCompileError(final ParseException e) {
+        return Component.translatable("tis3d.compiler.error", e.getLineNumber(), e.getStart(), e.getEnd(), e.getDisplayMessage());
     }
 }

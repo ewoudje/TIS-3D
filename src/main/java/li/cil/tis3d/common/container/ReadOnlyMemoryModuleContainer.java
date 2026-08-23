@@ -15,22 +15,21 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Arrays;
 
 public final class ReadOnlyMemoryModuleContainer extends AbstractContainerMenu {
-    public static ReadOnlyMemoryModuleContainer create(final int id, final Inventory playerInventory, final FriendlyByteBuf data) {
-        final InteractionHand hand = data.readEnum(InteractionHand.class);
-        return new ReadOnlyMemoryModuleContainer(id, playerInventory.player, hand);
-    }
+    private final Player player;
 
     // --------------------------------------------------------------------- //
-
-    private final Player player;
     private final InteractionHand hand;
-
     private byte[] lastSentData;
 
     public ReadOnlyMemoryModuleContainer(final int id, final Player player, final InteractionHand hand) {
         super(Containers.READ_ONLY_MEMORY_MODULE.get(), id);
         this.player = player;
         this.hand = hand;
+    }
+
+    public static ReadOnlyMemoryModuleContainer create(final int id, final Inventory playerInventory, final FriendlyByteBuf data) {
+        final InteractionHand hand = data.readEnum(InteractionHand.class);
+        return new ReadOnlyMemoryModuleContainer(id, playerInventory.player, hand);
     }
 
     public InteractionHand getHand() {

@@ -1,13 +1,10 @@
 package li.cil.tis3d.data;
 
 import li.cil.tis3d.api.API;
-import li.cil.tis3d.common.tags.BlockTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.common.data.BlockTagsProvider;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.common.data.ItemTagsProvider;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -15,13 +12,18 @@ import static li.cil.tis3d.common.item.Items.*;
 import static li.cil.tis3d.common.tags.ItemTags.*;
 
 public final class ModItemTagsProvider extends ItemTagsProvider {
-    public ModItemTagsProvider(final PackOutput output, final CompletableFuture<HolderLookup.Provider> lookupProvider, final BlockTagsProvider blockTagsProvider, final ExistingFileHelper existingFileHelper) {
-        super(output, lookupProvider, blockTagsProvider.contentsGetter(), API.MOD_ID, existingFileHelper);
+    public ModItemTagsProvider(final PackOutput output, final CompletableFuture<HolderLookup.Provider> lookupProvider) {
+        super(output, lookupProvider, API.MOD_ID);
     }
 
     @Override
     protected void addTags(final HolderLookup.Provider provider) {
-        copy(BlockTags.COMPUTERS, COMPUTERS);
+
+        tag(COMPUTERS)
+            .add(
+                CONTROLLER.get(),
+                CASING.get()
+            );
 
         tag(MODULES).add(
             AUDIO_MODULE.get(),

@@ -1,6 +1,5 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import li.cil.tis3d.api.machine.Casing;
@@ -8,18 +7,14 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.item.ReadOnlyMemoryModuleItem;
-import li.cil.tis3d.util.Color;
 import li.cil.tis3d.util.EnumUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Arrays;
 
@@ -35,48 +30,36 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    protected final byte[] memory = new byte[MEMORY_SIZE];
-    protected byte address;
-    protected State state = State.ADDRESS;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     /**
      * The size of the memory, in bytes.
      */
     public static final int MEMORY_SIZE = 256;
-
-    protected enum State {
-        ADDRESS,
-        ACCESS
-    }
-
     // NBT data names.
     private static final String TAG_MEMORY = "memory";
     private static final String TAG_ADDRESS = "address";
-    private static final String TAG_STATE = "state";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
+    private static final String TAG_STATE = "state";
     // Data packet types.
     private static final byte DATA_TYPE_CLEAR = 0;
-
     // Message types.
     private static final byte PACKET_CLEAR = 0;
     private static final byte PACKET_SINGLE = 1;
     private static final byte PACKET_FULL = 2;
-
-    // --------------------------------------------------------------------- //
+    protected final byte[] memory = new byte[MEMORY_SIZE];
+    protected byte address;
+    protected State state = State.ADDRESS;
 
     public RandomAccessMemoryModule(final Casing casing, final Face face) {
         super(casing, face);
     }
 
+    // --------------------------------------------------------------------- //
+
     public byte[] getMemory() {
         return memory;
     }
-
-    // --------------------------------------------------------------------- //
-    // Module
 
     @Override
     public void step() {
@@ -86,6 +69,9 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
             stepOutput();
         }
     }
+
+    // --------------------------------------------------------------------- //
+    // Module
 
     @Override
     public void onDisabled() {
@@ -158,8 +144,8 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        load(tag.getByteArray(TAG_MEMORY));
-        address = tag.getByte(TAG_ADDRESS);
+        load(tag.getByteArray(TAG_MEMORY).orElse(new byte[0]));
+        address = tag.getByteOr(TAG_ADDRESS, (byte) 0);
         state = EnumUtils.load(State.class, TAG_STATE, tag);
     }
 
@@ -172,12 +158,12 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
         EnumUtils.save(state, TAG_STATE, tag);
     }
 
-    // --------------------------------------------------------------------- //
-
     protected void clearOnDisabled() {
         clear();
         sendClear();
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Called whenever the module tries to start reading.
@@ -195,11 +181,11 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
         return 0xFFBBDDFF;
     }
 
-    // --------------------------------------------------------------------- //
-
     private int get() {
         return memory[address & 0xFF] & 0xFF;
     }
+
+    // --------------------------------------------------------------------- //
 
     private void set(final int value) {
         memory[address & 0xFF] = (byte) value;
@@ -315,5 +301,10 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
         if (data.length < memory.length) {
             Arrays.fill(memory, data.length, memory.length, (byte) 0);
         }
+    }
+
+    protected enum State {
+        ADDRESS,
+        ACCESS
     }
 }

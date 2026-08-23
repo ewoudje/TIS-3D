@@ -14,7 +14,9 @@ public final class CommonConfig {
      * The maximum number of packets to allow sending per tick before
      * throttling kicks in, killing duplicate data packets.
      */
-    @Path("network") @Min(1) @Max(500)
+    @Path("network")
+    @Min(1)
+    @Max(500)
     @Comment({
         "The maximum number of status packets modules may send per tick.",
         "When this is exceeded, throttling kicks in."})
@@ -25,7 +27,9 @@ public final class CommonConfig {
      * The maximum number of particle effects to allow sending per tick
      * before throttling kicks in, killing duplicate effects.
      */
-    @Path("network") @Min(1) @Max(500)
+    @Path("network")
+    @Min(1)
+    @Max(500)
     @Comment({
         "The maximum number of particle effects data transfer may trigger per tick.",
         "When this is exceeded, throttling kicks in."})
@@ -35,7 +39,9 @@ public final class CommonConfig {
     /**
      * The maximum number of casings that may be connected to a controller.
      */
-    @Path("controller") @Min(1) @Max(64)
+    @Path("controller")
+    @Min(1)
+    @Max(64)
     @Comment("The maximum number of casings a single controller supports.")
     @Translation("maxCasings")
     public static int maxCasingsPerController = 16;
@@ -43,7 +49,9 @@ public final class CommonConfig {
     /**
      * The maximum number of lines a program may have.
      */
-    @Path("module.execution") @Min(0) @Max(200)
+    @Path("module.execution")
+    @Min(0)
+    @Max(200)
     @Comment("The maximum number of lines an ASM program for an execution node may have. Use zero to remove the limit.")
     @Translation("maxLinesPerProgram")
     public static int maxLinesPerProgram = 40;
@@ -53,7 +61,9 @@ public final class CommonConfig {
      * <p>
      * If the queue runs full, additionally received packets will be dropped.
      */
-    @Path("module.infrared") @Min(1) @Max(64)
+    @Path("module.infrared")
+    @Min(1)
+    @Max(64)
     @Comment("The maximum number of infrared packets that can be stored in the receiver's buffer.")
     @Translation("maxQueueLength")
     public static int maxInfraredQueueLength = 16;

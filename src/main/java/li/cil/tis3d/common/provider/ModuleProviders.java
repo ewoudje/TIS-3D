@@ -4,12 +4,6 @@ import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleProvider;
-import li.cil.tis3d.api.module.ModuleRenderer;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.client.renderer.module.DisplayModuleRenderer;
-import li.cil.tis3d.client.renderer.module.ExecutionModuleRenderer;
-import li.cil.tis3d.client.renderer.module.RandomAccessMemoryModuleRenderer;
-import li.cil.tis3d.client.renderer.module.TextureModuleRenderer;
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.item.ModuleItem;
 import li.cil.tis3d.common.module.AudioModule;
@@ -38,7 +32,6 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 public final class ModuleProviders {
     private static final DeferredRegister<ModuleProvider> MODULE_PROVIDERS = RegistryUtils.getDeferred(ModuleProvider.REGISTRY);

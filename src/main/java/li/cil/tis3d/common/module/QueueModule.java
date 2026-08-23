@@ -21,26 +21,23 @@ public final class QueueModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private final short[] queue = new short[QUEUE_SIZE];
-    private int head = 0; // Highest element index, exclusive.
-    private int tail = 0; // Lowest element index, inclusive.
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
-    // NBT data names.
-    private static final String TAG_QUEUE = "queue";
-    private static final String TAG_HEAD = "head";
-    private static final String TAG_TAIL = "tail";
-
-    // Data packet types.
-    private static final byte DATA_TYPE_UPDATE = 0;
-
     /**
      * The number of elements the queue may store, plus one never used slot
      * to allow easily differentiating empty and full queue states.
      */
     public static final int QUEUE_SIZE = 17;
+    // NBT data names.
+    private static final String TAG_QUEUE = "queue";
+    private static final String TAG_HEAD = "head";
+
+    // --------------------------------------------------------------------- //
+    // Computed data
+    private static final String TAG_TAIL = "tail";
+    // Data packet types.
+    private static final byte DATA_TYPE_UPDATE = 0;
+    private final short[] queue = new short[QUEUE_SIZE];
+    private int head = 0; // Highest element index, exclusive.
+    private int tail = 0; // Lowest element index, inclusive.
 
     // --------------------------------------------------------------------- //
 
@@ -111,14 +108,14 @@ public final class QueueModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        final int[] queueTag = tag.getIntArray(TAG_QUEUE);
+        final int[] queueTag = tag.getIntArray(TAG_QUEUE).orElse(new int[0]);
         final int count = Math.min(queueTag.length, queue.length);
         for (int i = 0; i < count; i++) {
             queue[i] = (short) queueTag[i];
         }
 
-        head = Mth.clamp(tag.getInt(TAG_HEAD), 0, QUEUE_SIZE - 1);
-        tail = Mth.clamp(tag.getInt(TAG_TAIL), 0, QUEUE_SIZE - 1);
+        head = Mth.clamp(tag.getIntOr(TAG_HEAD, 0), 0, QUEUE_SIZE - 1);
+        tail = Mth.clamp(tag.getIntOr(TAG_TAIL, 0), 0, QUEUE_SIZE - 1);
     }
 
     @Override

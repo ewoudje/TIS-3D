@@ -10,7 +10,7 @@ import li.cil.tis3d.util.config.Min;
 import li.cil.tis3d.util.config.Path;
 import li.cil.tis3d.util.config.Translation;
 import li.cil.tis3d.util.config.WorldRestart;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,7 +52,7 @@ public abstract class ConfigManager {
         STRING_CONVERTERS.put(double.class, Pair.of(o -> String.valueOf((double) o), Double::parseDouble));
         STRING_CONVERTERS.put(String.class, Pair.of(s -> (String) s, s -> s));
         STRING_CONVERTERS.put(UUID.class, Pair.of(Object::toString, UUID::fromString));
-        STRING_CONVERTERS.put(ResourceLocation.class, Pair.of(Object::toString, ResourceLocation::parse));
+        STRING_CONVERTERS.put(Identifier.class, Pair.of(Object::toString, Identifier::parse));
     }
 
     // --------------------------------------------------------------------- //
@@ -354,6 +354,22 @@ public abstract class ConfigManager {
         ConfigFieldPair<?> apply(final Object instance, final Field field, final Builder builder) throws IllegalAccessException;
     }
 
+    protected interface Builder {
+        <T> ConfigValue<T> define(String path, T defaultValue);
+
+        <T extends Comparable<? super T>> ConfigValue<T> defineInRange(String path, T defaultValue, T min, T max, Class<T> type);
+
+        Builder comment(String... comment);
+
+        Builder translation(@Nullable String translationKey);
+
+        Builder worldRestart();
+    }
+
+    protected interface ConfigValue<T> {
+        T get();
+    }
+
     protected record ConfigDefinition(Object instance, ArrayList<ConfigFieldPair<?>> values) {
         public void apply() {
             for (final ConfigFieldPair<?> pair : values) {
@@ -407,21 +423,5 @@ public abstract class ConfigManager {
         public void apply(final Object instance) {
             applier.accept(value.get());
         }
-    }
-
-    protected interface Builder {
-        <T> ConfigValue<T> define(String path, T defaultValue);
-
-        <T extends Comparable<? super T>> ConfigValue<T> defineInRange(String path, T defaultValue, T min, T max, Class<T> type);
-
-        Builder comment(String... comment);
-
-        Builder translation(@Nullable String translationKey);
-
-        Builder worldRestart();
-    }
-
-    protected interface ConfigValue<T> {
-        T get();
     }
 }

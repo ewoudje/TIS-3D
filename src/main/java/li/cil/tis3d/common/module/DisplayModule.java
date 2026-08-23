@@ -1,31 +1,16 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.ModRenderType;
 import li.cil.tis3d.client.renderer.module.DisplayModuleRenderer;
 import li.cil.tis3d.util.Color;
 import li.cil.tis3d.util.EnumUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor.ABGR32;
-import net.minecraft.util.FastColor.ARGB32;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Arrays;
 
@@ -33,62 +18,42 @@ public final class DisplayModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
     // Persisted data
 
+    // Resolution of the screen in pixels, width = height.
+    public static final int RESOLUTION = 24;
+    // NBT tag names.
+    private static final String TAG_IMAGE = "image";
+    private static final String TAG_STATE = "state";
+    private static final String TAG_DRAW_CALL = "drawCall";
+
+    // --------------------------------------------------------------------- //
+    // Computed data
+    // Data packet types.
+    private static final byte DATA_TYPE_CLEAR = 0;
     /**
      * The uncompressed image as RGBA, for faster application of draw calls
      * and uploading to the GPU. Also kept on the server to allow sending
      * current state to newly connected/coming closer clients.
      */
     private final int[] image = new int[RESOLUTION * RESOLUTION];
-
-    /**
-     * Whether the image data changed and needs to be re-uploaded to the GPU.
-     */
-    private boolean imageDirty = false;
-
-    /**
-     * The current input state, i.e. what value we're currently reading.
-     */
-    private State state = State.COLOR;
-
     /**
      * The currently being-built draw call. Stored as byte-array for more
      * convenient saving and loading (and sending to clients).
      */
     private final byte[] drawCall = new byte[State.values().length];
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     /**
-     * Current state of the display module, decides what happens with the next
-     * value read on any of the ports.
+     * Whether the image data changed and needs to be re-uploaded to the GPU.
      */
-    private enum State {
-        COLOR, X, Y, W, H;
-
-        public static final State[] VALUES = State.values();
-
-        public State getNext() {
-            return VALUES[(ordinal() + 1) % VALUES.length];
-        }
-    }
-
-    // Resolution of the screen in pixels, width = height.
-    public static final int RESOLUTION = 24;
-
-    // NBT tag names.
-    private static final String TAG_IMAGE = "image";
-    private static final String TAG_STATE = "state";
-    private static final String TAG_DRAW_CALL = "drawCall";
-
-    // Data packet types.
-    private static final byte DATA_TYPE_CLEAR = 0;
-
-    // --------------------------------------------------------------------- //
+    private boolean imageDirty = false;
+    /**
+     * The current input state, i.e. what value we're currently reading.
+     */
+    private State state = State.COLOR;
 
     public DisplayModule(final Casing casing, final Face face) {
         super(casing, face);
     }
+
+    // --------------------------------------------------------------------- //
 
     public boolean resetImageDirty() {
         boolean result = imageDirty;
@@ -100,15 +65,15 @@ public final class DisplayModule extends AbstractModuleWithRotation {
         return image;
     }
 
-    // --------------------------------------------------------------------- //
-    // Module
-
     @Override
     public void step() {
         for (final Port port : Port.VALUES) {
             stepInput(port);
         }
     }
+
+    // --------------------------------------------------------------------- //
+    // Module
 
     @Override
     public void onDisabled() {
@@ -143,13 +108,13 @@ public final class DisplayModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        final int[] imageTag = tag.getIntArray(TAG_IMAGE);
+        final int[] imageTag = tag.getIntArray(TAG_IMAGE).orElse(new int[0]);
         System.arraycopy(imageTag, 0, image, 0, Math.min(imageTag.length, image.length));
         imageDirty = true;
 
         state = EnumUtils.load(State.class, TAG_STATE, tag);
 
-        final byte[] drawCallTag = tag.getByteArray(TAG_DRAW_CALL);
+        final byte[] drawCallTag = tag.getByteArray(TAG_DRAW_CALL).orElse(new byte[0]);
         System.arraycopy(drawCallTag, 0, drawCall, 0, Math.min(drawCallTag.length, drawCall.length));
     }
 
@@ -161,8 +126,6 @@ public final class DisplayModule extends AbstractModuleWithRotation {
         EnumUtils.save(state, TAG_STATE, tag);
         tag.putByteArray(TAG_DRAW_CALL, drawCall.clone());
     }
-
-    // --------------------------------------------------------------------- //
 
     /**
      * Update the input of the module, adding any read value to our draw call.
@@ -177,6 +140,8 @@ public final class DisplayModule extends AbstractModuleWithRotation {
             process(receivingPipe.read());
         }
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Process a value read from any port.
@@ -238,5 +203,19 @@ public final class DisplayModule extends AbstractModuleWithRotation {
         data.writeBoolean(false);
         data.writeBytes(drawCall);
         getCasing().sendData(getFace(), data);
+    }
+
+    /**
+     * Current state of the display module, decides what happens with the next
+     * value read on any of the ports.
+     */
+    private enum State {
+        COLOR, X, Y, W, H;
+
+        public static final State[] VALUES = State.values();
+
+        public State getNext() {
+            return VALUES[(ordinal() + 1) % VALUES.length];
+        }
     }
 }

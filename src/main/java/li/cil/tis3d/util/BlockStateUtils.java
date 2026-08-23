@@ -8,6 +8,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nullable;
 
 public final class BlockStateUtils {
+    private BlockStateUtils() {
+    }
+
+    // --------------------------------------------------------------------- //
+
     @Nullable
     public static BlockState getBlockStateFromItemStack(final ItemStack stack) {
         if (stack.isEmpty()) {
@@ -20,10 +25,5 @@ public final class BlockStateUtils {
         }
 
         return block.defaultBlockState();
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private BlockStateUtils() {
     }
 }

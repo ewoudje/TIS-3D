@@ -5,7 +5,6 @@ import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.RenderContext;
 import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.common.module.DisplayModule;
 import li.cil.tis3d.common.module.KeypadModule;
 import li.cil.tis3d.util.Color;
 import net.minecraft.world.phys.Vec3;
@@ -43,7 +42,7 @@ public class KeypadModuleRenderer extends AbstractModuleWithRotationRenderer<Key
         // Draw overlay for hovered button if we can currently input a value.
 
         if (value.isEmpty()) {
-            final Vec3 hitPos = getLocalHitPosition(module, context.getDispatcher().cameraHitResult);
+            final Vec3 hitPos = Vec3.ZERO; //TODO getLocalHitPosition(module, context.getDispatcher().cameraHitResult);
             if (hitPos != null) {
                 final Vec3 uv = module.hitToUV(hitPos);
                 final int button = module.uvToButton((float) uv.x, (float) uv.y);

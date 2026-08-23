@@ -2,6 +2,6 @@
 @MethodsReturnNonnullByDefault
 package li.cil.tis3d.client.manual;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.mojang.logging.annotations.MethodsReturnNonnullByDefault;
 
 import javax.annotation.ParametersAreNonnullByDefault;

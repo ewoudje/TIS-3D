@@ -76,7 +76,7 @@ public class SequencerModuleRenderer extends AbstractModuleWithRotationRenderer<
         }
 
         // Draw selection overlay for focused cell, if any.
-        final Vec3 hitPos = getLocalHitPosition(module, context.getDispatcher().cameraHitResult);
+        final Vec3 hitPos = null; //TODO getLocalHitPosition(module, context.getDispatcher().cameraHitResult);
         if (hitPos != null) {
             final Vec3 uv = module.hitToUV(hitPos);
             final int col = module.uvToCol((float) uv.x);

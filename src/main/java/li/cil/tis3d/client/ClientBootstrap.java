@@ -1,5 +1,6 @@
 package li.cil.tis3d.client;
 
+import li.cil.tis3d.client.asset.AssetGenerators;
 import li.cil.tis3d.client.gui.ReadOnlyMemoryModuleScreen;
 import li.cil.tis3d.client.renderer.ModuleRenderers;
 import li.cil.tis3d.client.renderer.color.CasingBlockColor;
@@ -12,12 +13,14 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 
 @ClientSided
 public final class ClientBootstrap {
     public static void setup(IEventBus bus) {
         ModuleRenderers.initialize(bus);
+        bus.addListener(AssetGenerators::gatherData);
 
         bus.addListener((RegisterColorHandlersEvent.Block e) ->
             e.register(new CasingBlockColor(), Blocks.CASING.get()));

@@ -11,7 +11,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -29,19 +28,21 @@ import java.util.Objects;
  * The code book, utility book for coding ASM programs for execution modules.
  */
 public final class CodeBookItem extends ModItem {
-    public CodeBookItem() {
-        super(createProperties().stacksTo(1));
+    public CodeBookItem(Properties properties) {
+        super(properties.stacksTo(1));
     }
 
     // --------------------------------------------------------------------- //
     // Item
 
     @Override
-    public InteractionResultHolder<ItemStack> use(final Level level, final Player player, final InteractionHand hand) {
+    public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
         if (level.isClientSide()) {
             openScreen(player, hand);
+            return InteractionResult.CONSUME;
         }
-        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
+
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -94,6 +95,41 @@ public final class CodeBookItem extends ModItem {
 
         }
 
+        /**
+         * Load code book data from the specified item stack.
+         *
+         * @param stack the item stack to load the data from.
+         * @return the data loaded from the stack.
+         */
+        public static MutableData getFromStack(final ItemStack stack) {
+            var result = stack.get(DataComponentTypes.CODEBOOK_COMPONENT);
+            return result == null ? new MutableData() : new MutableData(result);
+        }
+
+        /**
+         * Save the specified code book data to the specified item stack.
+         *
+         * @param stack the item stack to save the data to.
+         * @param data  the data to save to the item stack.
+         */
+        public static void setToStack(final ItemStack stack, final MutableData data) {
+            setToStack(stack, data.toImmutable());
+        }
+
+        public static void setToStack(final ItemStack stack, final Data data) {
+            stack.set(DataComponentTypes.CODEBOOK_COMPONENT, data);
+        }
+
+        private static boolean isPartialProgram(final List<String> program) {
+            boolean continues = false;
+            for (final String line : program) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                continues = Objects.equals(line.trim().toUpperCase(Locale.US), CONTINUATION_MACRO);
+            }
+            return continues;
+        }
 
         /**
          * Get the page currently selected in the book.
@@ -196,6 +232,8 @@ public final class CodeBookItem extends ModItem {
             setSelectedPage(pages.size() - newPages.size());
         }
 
+        // --------------------------------------------------------------------- //
+
         /**
          * Overwrite a page at the specified index.
          *
@@ -232,6 +270,8 @@ public final class CodeBookItem extends ModItem {
             return program;
         }
 
+        // --------------------------------------------------------------------- //
+
         /**
          * Get the leading and trailing code lines of a program spanning the specified
          * page, taking into account the <code>#BWTM</code> preprocessor marco. This
@@ -264,8 +304,6 @@ public final class CodeBookItem extends ModItem {
             }
         }
 
-        // --------------------------------------------------------------------- //
-
         private void validateSelectedPage() {
             selectedPage = Math.max(0, Math.min(pages.size() - 1, selectedPage));
         }
@@ -281,49 +319,10 @@ public final class CodeBookItem extends ModItem {
 
             return true;
         }
+        // --------------------------------------------------------------------- //
 
         public Data toImmutable() {
             return new Data(Collections.unmodifiableList(pages), selectedPage);
-        }
-
-        // --------------------------------------------------------------------- //
-
-
-        /**
-         * Load code book data from the specified item stack.
-         *
-         * @param stack the item stack to load the data from.
-         * @return the data loaded from the stack.
-         */
-        public static MutableData getFromStack(final ItemStack stack) {
-            var result = stack.get(DataComponentTypes.CODEBOOK_COMPONENT);
-            return result == null ? new MutableData() : new MutableData(result);
-        }
-
-        /**
-         * Save the specified code book data to the specified item stack.
-         *
-         * @param stack the item stack to save the data to.
-         * @param data  the data to save to the item stack.
-         */
-        public static void setToStack(final ItemStack stack, final MutableData data) {
-            setToStack(stack, data.toImmutable());
-        }
-
-        public static void setToStack(final ItemStack stack, final Data data) {
-            stack.set(DataComponentTypes.CODEBOOK_COMPONENT, data);
-        }
-        // --------------------------------------------------------------------- //
-
-        private static boolean isPartialProgram(final List<String> program) {
-            boolean continues = false;
-            for (final String line : program) {
-                if (line.trim().isEmpty()) {
-                    continue;
-                }
-                continues = Objects.equals(line.trim().toUpperCase(Locale.US), CONTINUATION_MACRO);
-            }
-            return continues;
         }
     }
 }

@@ -6,11 +6,12 @@ import li.cil.tis3d.common.block.Blocks;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
@@ -34,18 +35,18 @@ public final class ModLootTableProvider extends LootTableProvider {
 
     @Override
     protected void validate(WritableRegistry<LootTable> writableRegistry, ValidationContext validationContext, ProblemReporter.Collector problemreporter$collector) {
-        final Set<ResourceLocation> modLootTableIds =
+        final Set<Identifier> modLootTableIds =
             BuiltInLootTables
                 .all()
                 .stream()
-                .map(ResourceKey::location)
+                .map(ResourceKey::identifier)
                 .filter(lootTable -> Objects.equals(lootTable.getNamespace(), API.MOD_ID))
                 .collect(Collectors.toSet());
 
-        for (final ResourceLocation id : Sets.difference(modLootTableIds, writableRegistry.keySet()))
-            validationContext.reportProblem("Missing mod loot table: " + id);
+        for (final Identifier id : Sets.difference(modLootTableIds, writableRegistry.keySet()))
+            validationContext.reportProblem(new ValidationContext.MissingReferenceProblem(ResourceKey.create(Registries.LOOT_TABLE, id)));
 
-        /*
+        /*TODO
         writableRegistry.forEach((table) ->
             table.validate(
                 validationContext
@@ -79,7 +80,7 @@ public final class ModLootTableProvider extends LootTableProvider {
         protected Iterable<Block> getKnownBlocks() {
             return StreamSupport.stream(super.getKnownBlocks().spliterator(), false)
                 .filter(block -> {
-                    final ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(block);
+                    final Identifier blockId = BuiltInRegistries.BLOCK.getKey(block);
                     return Objects.equals(blockId.getNamespace(), API.MOD_ID);
                 })
                 .collect(Collectors.toSet());

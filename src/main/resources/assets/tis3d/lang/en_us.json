@@ -27,8 +27,8 @@
     "item.tis3d.timer_module": "Timer Module",
     "item.tis3d.prism": "Prism",
 
-    "block.tis3d.casing": "Casing",
-    "block.tis3d.controller": "Controller",
+    "item.tis3d.casing": "Casing",
+    "item.tis3d.controller": "Controller",
 
     "tis3d.compiler.error": "Compile error @%s:%s-%s: %s",
     "tis3d.compiler.invalid_format": "Unexpected token",

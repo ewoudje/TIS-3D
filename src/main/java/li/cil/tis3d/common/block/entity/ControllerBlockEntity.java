@@ -46,98 +46,32 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    /**
-     * Time to keep waiting before resuming execution after an HCF event.
-     */
-    private int hcfCooldown = 0;
+    // NBT tag names.
+    private static final String TAG_HCF_COOLDOWN = "hcfCooldown";
 
     // --------------------------------------------------------------------- //
     // Computed data
-
-    // NBT tag names.
-    private static final String TAG_HCF_COOLDOWN = "hcfCooldown";
     private static final String TAG_STATE = "state";
-
     /**
      * Time in ticks to wait before restarting execution after an HCF event.
      */
     private static final int COOLDOWN_HCF = 60;
-
-    /**
-     * Possible states of a controller.
-     */
-    public enum ControllerState {
-        /**
-         * A scan has been scheduled and will be performed in the next tick.
-         */
-        SCANNING(false),
-
-        /**
-         * In the last scan another controller was found; only one is allowed per multi-block.
-         */
-        MULTIPLE_CONTROLLERS(true),
-
-        /**
-         * In the last scan more than {@link CommonConfig#maxCasingsPerController} casings were found.
-         */
-        TOO_COMPLEX(true),
-
-        /**
-         * In the last scan the border of the loaded area was hit; incomplete multi-blocks to nothing.
-         */
-        INCOMPLETE(true),
-
-        /**
-         * The controller is in operational state and can update connected casings each tick.
-         */
-        READY(false),
-
-        /**
-         * The controller is in operational state and powered, updating connected casings each tick.
-         */
-        RUNNING(false);
-
-        // --------------------------------------------------------------------- //
-
-        /**
-         * Whether this states is an error state, i.e. whether it indicates the controller
-         * not operation normally due it being configured incorrectly, for example.
-         */
-        public final boolean isError;
-
-        /**
-         * The message to display for this status.
-         */
-        public final Component message;
-
-        ControllerState(final boolean isError) {
-            this.isError = isError;
-            this.message = Component.translatable(API.MOD_ID + ".controller.status." + name().toLowerCase(Locale.US));
-        }
-
-        // --------------------------------------------------------------------- //
-
-        /**
-         * All possible enum values for quick indexing.
-         */
-        public static final ControllerState[] VALUES = ControllerState.values();
-    }
-
     /**
      * The list of casings managed by this controller.
      */
     private final List<CasingBlockEntity> casings = new ArrayList<>(CommonConfig.maxCasingsPerController);
-
+    /**
+     * Time to keep waiting before resuming execution after an HCF event.
+     */
+    private int hcfCooldown = 0;
     /**
      * The current state of the controller.
      */
     private ControllerState state = ControllerState.SCANNING;
-
     /**
      * The last state we sent to clients, i.e. the state clients think the controller is in.
      */
     private ControllerState lastSentState = ControllerState.SCANNING;
-
     /**
      * User scheduled a forced step for the next tick.
      * <p>
@@ -146,13 +80,63 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
      * there's no need to save the value, either.
      */
     private boolean forceStep;
-
     private boolean isDisposed;
-
-    // --------------------------------------------------------------------- //
 
     public ControllerBlockEntity(final BlockPos pos, final BlockState state) {
         super(BlockEntities.CONTROLLER.get(), pos, state);
+    }
+
+    // --------------------------------------------------------------------- //
+
+    public static void serverTick(final Level level, final BlockPos pos, final BlockState state, final ControllerBlockEntity blockEntity) {
+        blockEntity.serverTick();
+    }
+
+    /**
+     * Checks all six neighbors of the specified tile entity and adds them to the
+     * queue if they're a controller or casing and haven't been checked yet (or
+     * added to the queue yet).
+     * <p>
+     * This returns a boolean value indicating whether a level border has been
+     * hit. In this case we abort the search and wait, to avoid potentially
+     * partially loaded multi-blocks.
+     * <p>
+     * Note that this is also used in {@link CasingBlockEntity} for the reverse
+     * search when trying to notify a controller.
+     * <p>
+     * <em>Important</em>: we have to pass along a valid level object here
+     * instead of relying on the passed tile entity's level, since we may
+     * have caused tile entity creation in rare cases (e.g. broken saves
+     * where tile entities were not restored during load), which will not have
+     * their level set if this is called from the update loop (where newly
+     * created tile entities are added to a separate list, and will be added
+     * to their chunk and thus get their level set later on).
+     *
+     * @param level       the level we're scanning for tile entities in.
+     * @param blockEntity the tile entity to get the neighbors for.
+     * @param processed   the list of processed tile entities.
+     * @param queue       the list of pending tile entities.
+     * @return <tt>true</tt> if all neighbors could be checked, <tt>false</tt> otherwise.
+     */
+    static boolean addNeighbors(final Level level, final BlockEntity blockEntity, final Set<BlockEntity> processed, final Queue<BlockEntity> queue) {
+        for (final Direction facing : Direction.values()) {
+            final BlockPos neighborPos = blockEntity.getBlockPos().relative(facing);
+            if (!LevelUtils.isLoaded(level, neighborPos)) {
+                return false;
+            }
+
+            final BlockEntity neighborBlockEntity = level.getBlockEntity(neighborPos);
+            if (neighborBlockEntity == null) {
+                continue;
+            }
+            if (!processed.add(neighborBlockEntity)) {
+                continue;
+            }
+            if (neighborBlockEntity instanceof ControllerBlockEntity || neighborBlockEntity instanceof CasingBlockEntity) {
+                queue.add(neighborBlockEntity);
+            }
+        }
+        return true;
     }
 
     @Override
@@ -197,6 +181,9 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
         }
     }
 
+    // --------------------------------------------------------------------- //
+    // BlockEntity
+
     /**
      * Reset the controller, pause for a moment and catch fire.
      */
@@ -212,7 +199,7 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     }
 
     // --------------------------------------------------------------------- //
-    // BlockEntity
+    // BlockEntityComputer
 
     @Override
     public void setRemoved() {
@@ -244,14 +231,11 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
         casings.clear();
     }
 
-    // --------------------------------------------------------------------- //
-    // BlockEntityComputer
-
     @Override
     protected void loadServer(final CompoundTag tag, final HolderLookup.Provider registries) {
         super.loadServer(tag, registries);
 
-        hcfCooldown = tag.getInt(TAG_HCF_COOLDOWN);
+        hcfCooldown = tag.getIntOr(TAG_HCF_COOLDOWN, 0);
     }
 
     @Override
@@ -265,8 +249,11 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     protected void loadClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         super.loadClient(tag, registries);
 
-        state = ControllerState.VALUES[tag.getByte(TAG_STATE) & 0xFF];
+        state = ControllerState.VALUES[tag.getByteOr(TAG_STATE, (byte) 0) & 0xFF];
     }
+
+    // --------------------------------------------------------------------- //
+    // Ticking
 
     @Override
     protected void saveClient(final CompoundTag tag, final HolderLookup.Provider registries) {
@@ -275,20 +262,13 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
         tag.putByte(TAG_STATE, (byte) state.ordinal());
     }
 
-    // --------------------------------------------------------------------- //
-    // Ticking
-
-    public static void serverTick(final Level level, final BlockPos pos, final BlockState state, final ControllerBlockEntity blockEntity) {
-        blockEntity.serverTick();
-    }
-
     private void serverTick() {
         final Level level = getBlockEntityLevel();
 
         if (state != lastSentState) {
             final BlockState blockState = level.getBlockState(getBlockPos());
             level.sendBlockUpdated(getBlockPos(), blockState, blockState, 7);
-            level.blockUpdated(getBlockPos(), blockState.getBlock());
+            //TODO level.blockUpdated(getBlockPos(), blockState.getBlock());
             Network.sendToTrackingPlayers(this, new ControllerStateMessage(this, state));
             lastSentState = state;
         }
@@ -301,7 +281,7 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
                 for (final Direction facing : Direction.values()) {
                     final BlockPos neighborPos = getBlockPos().relative(facing);
                     final BlockState neighborState = level.getBlockState(neighborPos);
-                    if (neighborState.isSolidRender(level, neighborPos)) {
+                    if (neighborState.isSolidRender()) {
                         continue;
                     }
                     if (level.random.nextFloat() > 0.25f) {
@@ -394,53 +374,6 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     }
 
     // --------------------------------------------------------------------- //
-
-    /**
-     * Checks all six neighbors of the specified tile entity and adds them to the
-     * queue if they're a controller or casing and haven't been checked yet (or
-     * added to the queue yet).
-     * <p>
-     * This returns a boolean value indicating whether a level border has been
-     * hit. In this case we abort the search and wait, to avoid potentially
-     * partially loaded multi-blocks.
-     * <p>
-     * Note that this is also used in {@link CasingBlockEntity} for the reverse
-     * search when trying to notify a controller.
-     * <p>
-     * <em>Important</em>: we have to pass along a valid level object here
-     * instead of relying on the passed tile entity's level, since we may
-     * have caused tile entity creation in rare cases (e.g. broken saves
-     * where tile entities were not restored during load), which will not have
-     * their level set if this is called from the update loop (where newly
-     * created tile entities are added to a separate list, and will be added
-     * to their chunk and thus get their level set later on).
-     *
-     * @param level       the level we're scanning for tile entities in.
-     * @param blockEntity the tile entity to get the neighbors for.
-     * @param processed   the list of processed tile entities.
-     * @param queue       the list of pending tile entities.
-     * @return <tt>true</tt> if all neighbors could be checked, <tt>false</tt> otherwise.
-     */
-    static boolean addNeighbors(final Level level, final BlockEntity blockEntity, final Set<BlockEntity> processed, final Queue<BlockEntity> queue) {
-        for (final Direction facing : Direction.values()) {
-            final BlockPos neighborPos = blockEntity.getBlockPos().relative(facing);
-            if (!LevelUtils.isLoaded(level, neighborPos)) {
-                return false;
-            }
-
-            final BlockEntity neighborBlockEntity = level.getBlockEntity(neighborPos);
-            if (neighborBlockEntity == null) {
-                continue;
-            }
-            if (!processed.add(neighborBlockEntity)) {
-                continue;
-            }
-            if (neighborBlockEntity instanceof ControllerBlockEntity || neighborBlockEntity instanceof CasingBlockEntity) {
-                queue.add(neighborBlockEntity);
-            }
-        }
-        return true;
-    }
 
     /**
      * Do a scan for connected casings starting from this controller.
@@ -585,5 +518,63 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
         casings.clear();
 
         state = toState;
+    }
+
+    /**
+     * Possible states of a controller.
+     */
+    public enum ControllerState {
+        /**
+         * A scan has been scheduled and will be performed in the next tick.
+         */
+        SCANNING(false),
+
+        /**
+         * In the last scan another controller was found; only one is allowed per multi-block.
+         */
+        MULTIPLE_CONTROLLERS(true),
+
+        /**
+         * In the last scan more than {@link CommonConfig#maxCasingsPerController} casings were found.
+         */
+        TOO_COMPLEX(true),
+
+        /**
+         * In the last scan the border of the loaded area was hit; incomplete multi-blocks to nothing.
+         */
+        INCOMPLETE(true),
+
+        /**
+         * The controller is in operational state and can update connected casings each tick.
+         */
+        READY(false),
+
+        /**
+         * The controller is in operational state and powered, updating connected casings each tick.
+         */
+        RUNNING(false);
+
+        // --------------------------------------------------------------------- //
+
+        /**
+         * All possible enum values for quick indexing.
+         */
+        public static final ControllerState[] VALUES = ControllerState.values();
+        /**
+         * Whether this states is an error state, i.e. whether it indicates the controller
+         * not operation normally due it being configured incorrectly, for example.
+         */
+        public final boolean isError;
+        /**
+         * The message to display for this status.
+         */
+        public final Component message;
+
+        // --------------------------------------------------------------------- //
+
+        ControllerState(final boolean isError) {
+            this.isError = isError;
+            this.message = Component.translatable(API.MOD_ID + ".controller.status." + name().toLowerCase(Locale.US));
+        }
     }
 }

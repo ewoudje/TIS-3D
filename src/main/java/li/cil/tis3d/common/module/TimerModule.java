@@ -1,21 +1,13 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
 import net.minecraft.nbt.CompoundTag;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * The timer module can be used to wait for a specific amount of game time.
@@ -30,21 +22,17 @@ public final class TimerModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    // The game time the timer elapses at.
-    private long timer;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT data names.
     private static final String TAG_TIMER = "timer";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
     // Data packet types.
     private static final byte DATA_TYPE_UPDATE = 0;
-
     // The value written to all ports once the timer has reached zero.
     private static final short OUTPUT_VALUE = 1;
-
+    // The game time the timer elapses at.
+    private long timer;
     // Cached elapsed state.
     private boolean hasElapsed;
 
@@ -95,7 +83,7 @@ public final class TimerModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        timer = tag.getLong(TAG_TIMER);
+        timer = tag.getLongOr(TAG_TIMER, 0);
     }
 
     @Override
@@ -115,10 +103,6 @@ public final class TimerModule extends AbstractModuleWithRotation {
         return timer;
     }
 
-    public void elapsed() {
-        hasElapsed = true;
-    }
-
     /**
      * Set the timer to the specified value.
      *
@@ -136,6 +120,10 @@ public final class TimerModule extends AbstractModuleWithRotation {
         sendData();
 
         getCasing().setChanged();
+    }
+
+    public void elapsed() {
+        hasElapsed = true;
     }
 
     /**

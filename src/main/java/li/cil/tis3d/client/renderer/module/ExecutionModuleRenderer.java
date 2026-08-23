@@ -12,7 +12,7 @@ import li.cil.tis3d.common.module.execution.ExecutionState;
 import li.cil.tis3d.common.module.execution.MachineState;
 import li.cil.tis3d.common.module.execution.compiler.ParseException;
 import li.cil.tis3d.util.Color;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
 
     @Override
     public void render(final ExecutionModule module, final RenderContext context) {
-        if ((!module.getCasing().isEnabled() || !module.isVisible()) && !isHitFace(module, context.getDispatcher().cameraHitResult)) {
+        if ((!module.getCasing().isEnabled() || !module.isVisible()) /*&& !isHitFace(module, context.getDispatcher().cameraHitResult)*/) {
             return;
         }
 
@@ -120,7 +120,7 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
     }
 
     private static final class RenderData {
-        private static final ResourceLocation[] STATE_LOCATIONS = new ResourceLocation[]{
+        private static final Identifier[] STATE_LOCATIONS = new Identifier[]{
             Textures.LOCATION_OVERLAY_MODULE_EXECUTION_IDLE,
             Textures.LOCATION_OVERLAY_MODULE_EXECUTION_ERROR,
             Textures.LOCATION_OVERLAY_MODULE_EXECUTION_RUNNING,

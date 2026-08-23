@@ -19,6 +19,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -61,16 +65,13 @@ public final class CodeBookScreen extends Screen {
     private static final int COLOR_CODE = 0xFF333333;
     private static final int COLOR_CODE_SELECTED = 0xFFEEEEEE;
     private static final int COLOR_SELECTION = 0xCC333399;
-
-    private ButtonChangePage buttonNextPage;
-    private ButtonChangePage buttonPreviousPage;
-    private ButtonDeletePage buttonDeletePage;
-
     private final Player player;
     private final InteractionHand hand;
     private final CodeBookItem.MutableData data;
     private final List<StringBuilder> lines = new ArrayList<>();
-
+    private ButtonChangePage buttonNextPage;
+    private ButtonChangePage buttonPreviousPage;
+    private ButtonDeletePage buttonDeletePage;
     private int guiX = 0;
     private int guiY = 0;
     private int selectionStart = 0;
@@ -90,6 +91,14 @@ public final class CodeBookScreen extends Screen {
 
     // --------------------------------------------------------------------- //
     // GuiScreen
+
+    private static String applyCodeStyle(final String value) {
+        if (ClientConfig.autoCodeUpperCase) {
+            return value.toUpperCase(Locale.US);
+        } else {
+            return value;
+        }
+    }
 
     @Override
     public void init() {
@@ -119,7 +128,7 @@ public final class CodeBookScreen extends Screen {
     public void renderBackground(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTicks) {
         super.renderBackground(graphics, mouseX, mouseY, partialTicks);
 
-        graphics.blit(Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, guiX, guiY, 0, 0, GUI_WIDTH, GUI_HEIGHT);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, guiX, guiY, 0f, 0f, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
     }
 
     @Override
@@ -149,14 +158,14 @@ public final class CodeBookScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(final double mouseX, final double mouseY, final int mouseButton) {
-        if (super.mouseClicked(mouseX, mouseY, mouseButton)) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (super.mouseClicked(event, doubleClick)) {
             return true;
         }
 
-        if (isInCodeArea(mouseX, mouseY)) {
-            final int line = cursorToLine(mouseY);
-            final int column = cursorToColumn(mouseX + 2, mouseY);
+        if (isInCodeArea(event)) {
+            final int line = cursorToLine(event);
+            final int column = cursorToColumn(event);
             selectionStart = selectionEnd = positionToIndex(line, column);
             return true;
         }
@@ -165,14 +174,14 @@ public final class CodeBookScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(final double mouseX, final double mouseY, final int button, final double dragX, final double dragY) {
-        if (super.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (super.mouseDragged(event, dragX, dragY)) {
             return true;
         }
 
-        if (isInCodeArea(mouseX, mouseY)) {
-            final int line = cursorToLine(mouseY);
-            final int column = cursorToColumn(mouseX + 2, mouseY);
+        if (isInCodeArea(event)) {
+            final int line = cursorToLine(event);
+            final int column = cursorToColumn(event);
             selectionEnd = positionToIndex(line, column);
             return true;
         }
@@ -181,18 +190,20 @@ public final class CodeBookScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
-        if (keyCode == InputConstants.KEY_ESCAPE && this.shouldCloseOnEsc()) {
+    public boolean keyPressed(KeyEvent event) {
+        if (event.isEscape() && this.shouldCloseOnEsc()) {
             this.onClose();
             return true;
         }
 
         final int line = indexToLine(getSelectionStart());
         final int column = indexToColumn(getSelectionStart());
+        final int keyCode = event.key();
+        final boolean hasShiftDown = event.hasShiftDown();
 
-        if (keyCode == GLFW.GLFW_KEY_LEFT) {
+        if (keyCode == InputConstants.KEY_LEFT) {
             if (column > 0 || line > 0) {
-                if (hasShiftDown()) {
+                if (hasShiftDown) {
                     selectionEnd = selectionEnd - 1;
                 } else {
                     selectionStart = selectionEnd = selectionEnd - 1;
@@ -200,9 +211,9 @@ public final class CodeBookScreen extends Screen {
             }
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+        } else if (keyCode == InputConstants.KEY_RIGHT) {
             if (column < lines.get(line).length() || line < lines.size() - 1) {
-                if (hasShiftDown()) {
+                if (hasShiftDown) {
                     selectionEnd = selectionEnd + 1;
                 } else {
                     selectionStart = selectionEnd = selectionEnd + 1;
@@ -210,7 +221,7 @@ public final class CodeBookScreen extends Screen {
             }
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_UP) {
+        } else if (keyCode == InputConstants.KEY_UP) {
             final int currLine = indexToLine(selectionEnd);
             if (currLine > 0) {
                 final int currColumn = indexToColumn(selectionEnd);
@@ -219,7 +230,7 @@ public final class CodeBookScreen extends Screen {
                 final int prevColumn = xToColumn(x, prevLine);
                 final int index = positionToIndex(prevLine, prevColumn);
 
-                if (hasShiftDown()) {
+                if (hasShiftDown) {
                     selectionEnd = index;
                 } else {
                     selectionStart = selectionEnd = index;
@@ -227,7 +238,7 @@ public final class CodeBookScreen extends Screen {
             }
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_DOWN) {
+        } else if (keyCode == InputConstants.KEY_DOWN) {
             final int currLine = indexToLine(selectionEnd);
             if (currLine < lines.size() - 1) {
                 final int currColumn = indexToColumn(selectionEnd);
@@ -236,7 +247,7 @@ public final class CodeBookScreen extends Screen {
                 final int nextColumn = xToColumn(x, nextLine);
                 final int index = positionToIndex(nextLine, nextColumn);
 
-                if (hasShiftDown()) {
+                if (hasShiftDown) {
                     selectionEnd = index;
                 } else {
                     selectionStart = selectionEnd = index;
@@ -244,31 +255,31 @@ public final class CodeBookScreen extends Screen {
             }
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_HOME) {
+        } else if (keyCode == InputConstants.KEY_HOME) {
             final int currLine = indexToLine(selectionEnd);
-            if (hasShiftDown()) {
+            if (hasShiftDown) {
                 selectionEnd = positionToIndex(currLine, 0);
             } else {
                 selectionStart = selectionEnd = positionToIndex(currLine, 0);
             }
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_END) {
+        } else if (keyCode == InputConstants.KEY_END) {
             final int currLine = indexToLine(selectionEnd);
-            if (hasShiftDown()) {
+            if (hasShiftDown) {
                 selectionEnd = positionToIndex(currLine, lines.get(currLine).length());
             } else {
                 selectionStart = selectionEnd = positionToIndex(currLine, lines.get(currLine).length());
             }
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_DELETE) {
+        } else if (keyCode == InputConstants.KEY_DELETE) {
             if (!deleteSelection()) {
-                if (hasShiftDown()) {
+                if (hasShiftDown) {
                     if (lines.size() > 1) {
                         lines.remove(line);
                     } else {
-                        lines.get(0).setLength(0);
+                        lines.getFirst().setLength(0);
                     }
                     selectionStart = selectionEnd = positionToIndex(Math.min(lines.size() - 1, line), 0);
                 } else if (column < lines.get(line).length()) {
@@ -287,7 +298,7 @@ public final class CodeBookScreen extends Screen {
             recompile();
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+        } else if (keyCode == InputConstants.KEY_BACKSPACE) {
             if (!deleteSelection()) {
                 if (column > 0) {
                     lines.get(line).deleteCharAt(column - 1);
@@ -307,7 +318,7 @@ public final class CodeBookScreen extends Screen {
             recompile();
 
             return true;
-        } else if (keyCode == GLFW.GLFW_KEY_ENTER) {
+        } else if (keyCode == InputConstants.KEY_RETURN) {
             deleteSelection();
             if (lines.size() < Constants.MAX_LINES_PER_PAGE) {
                 final StringBuilder oldLine = lines.get(line);
@@ -324,18 +335,18 @@ public final class CodeBookScreen extends Screen {
             recompile();
 
             return true;
-        } else if (hasControlDown()) {
-            if (keyCode == GLFW.GLFW_KEY_A) {
+        } else if (event.hasControlDown()) {
+            if (keyCode == InputConstants.KEY_A) {
                 selectionStart = 0;
                 selectionEnd = positionToIndex(Integer.MAX_VALUE, Integer.MAX_VALUE);
-            } else if (keyCode == GLFW.GLFW_KEY_C) {
+            } else if (keyCode == InputConstants.KEY_C) {
                 getMinecraft().keyboardHandler.setClipboard(selectionToString());
-            } else if (keyCode == GLFW.GLFW_KEY_X) {
+            } else if (keyCode == InputConstants.KEY_X) {
                 getMinecraft().keyboardHandler.setClipboard(selectionToString());
                 deleteSelection();
 
                 recompile();
-            } else if (keyCode == GLFW.GLFW_KEY_V) {
+            } else if (keyCode == InputConstants.KEY_V) {
                 deleteSelection();
 
                 final String[] pastedLines = Constants.PATTERN_LINES.split(getMinecraft().keyboardHandler.getClipboard());
@@ -361,15 +372,16 @@ public final class CodeBookScreen extends Screen {
             return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(final char codePoint, final int modifiers) {
-        if (super.charTyped(codePoint, modifiers)) {
+    public boolean charTyped(CharacterEvent event) {
+        if (super.charTyped(event)) {
             return true;
         }
-        if (Character.isISOControl(codePoint)) {
+
+        if (Character.isISOControl(event.codepoint())) {
             return false;
         }
 
@@ -379,7 +391,7 @@ public final class CodeBookScreen extends Screen {
         final int column = indexToColumn(getSelectionStart());
 
         if (lines.get(line).length() < Constants.MAX_CHARS_PER_LINE) {
-            lines.get(line).insert(column, applyCodeStyle(String.valueOf(codePoint)));
+            lines.get(line).insert(column, applyCodeStyle(String.valueOf((char) event.codepoint())));
             selectionStart = selectionEnd = selectionEnd + 1;
         }
 
@@ -393,21 +405,18 @@ public final class CodeBookScreen extends Screen {
         return false;
     }
 
+    @Override
+    public boolean isInGameUi() {
+        return true;
+    }
+
+    // --------------------------------------------------------------------- //
+
     @Nullable
     @Override
     public GuiEventListener getFocused() {
         // We don't want space to trigger buttons, all input is interpreted as text input in this UI.
         return null;
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private static String applyCodeStyle(final String value) {
-        if (ClientConfig.autoCodeUpperCase) {
-            return value.toUpperCase(Locale.US);
-        } else {
-            return value;
-        }
     }
 
     public Minecraft getMinecraft() {
@@ -453,12 +462,12 @@ public final class CodeBookScreen extends Screen {
         }
     }
 
-    private int cursorToLine(final double y) {
-        return (int) Math.max(0, Math.min(Math.min(lines.size() - 1, Constants.MAX_LINES_PER_PAGE), (y - guiY - CODE_POS_Y) / getFontRenderer().lineHeight));
+    private int cursorToLine(final MouseButtonEvent event) {
+        return (int) Math.max(0, Math.min(Math.min(lines.size() - 1, Constants.MAX_LINES_PER_PAGE), (event.y() - guiY - CODE_POS_Y) / getFontRenderer().lineHeight));
     }
 
-    private int cursorToColumn(final double x, final double y) {
-        return xToColumn(x, cursorToLine(y));
+    private int cursorToColumn(final MouseButtonEvent event) {
+        return xToColumn(event.x() + 2, cursorToLine(event));
     }
 
     private int xToColumn(final double x, final int line) {
@@ -501,9 +510,9 @@ public final class CodeBookScreen extends Screen {
         return lines.get(lines.size() - 1).length(); // Out of bounds, clamp.
     }
 
-    private boolean isInCodeArea(final double mouseX, final double mouseY) {
-        return mouseX >= guiX + CODE_POS_X - CODE_MARGIN && mouseX <= guiX + CODE_POS_X + CODE_WIDTH + CODE_MARGIN &&
-            mouseY >= guiY + CODE_POS_Y - CODE_MARGIN && mouseY <= guiY + CODE_POS_Y + getFontRenderer().lineHeight * Constants.MAX_LINES_PER_PAGE + CODE_MARGIN;
+    private boolean isInCodeArea(final MouseButtonEvent event) {
+        return event.x() >= guiX + CODE_POS_X - CODE_MARGIN && event.x() <= guiX + CODE_POS_X + CODE_WIDTH + CODE_MARGIN &&
+            event.y() >= guiY + CODE_POS_Y - CODE_MARGIN && event.y() <= guiY + CODE_POS_Y + getFontRenderer().lineHeight * Constants.MAX_LINES_PER_PAGE + CODE_MARGIN;
     }
 
     private boolean isCurrentProgramNonEmpty() {
@@ -683,7 +692,7 @@ public final class CodeBookScreen extends Screen {
                     tooltip.add(ERROR_ON_NEXT_PAGE_TOOLTIP);
                 }
                 tooltip.add(exception.getDisplayMessage());
-                graphics.renderComponentTooltip(getFontRenderer(), tooltip, mouseX, mouseY);
+                //TODO graphics.renderComponentTooltip(getFontRenderer(), tooltip, mouseX, mouseY);
             }
         } else {
             // Draw selection position in text.
@@ -727,11 +736,17 @@ public final class CodeBookScreen extends Screen {
         }
 
         @Override
-        public void renderWidget(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTicks) {
+        protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
             final int offsetX = isHoveredOrFocusedUsingKeyboard() ? BUTTON_WIDTH : 0;
             final int offsetY = type == PageChangeType.Previous ? BUTTON_HEIGHT : 0;
-            graphics.blit(Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, getX(), getY(), TEXTURE_X + offsetX, TEXTURE_Y + offsetY, BUTTON_WIDTH, BUTTON_HEIGHT);
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
+                BUTTON_WIDTH, BUTTON_HEIGHT,
+                TEXTURE_X + offsetX, TEXTURE_Y + offsetY,
+                getX(), getY(),
+                BUTTON_WIDTH, BUTTON_HEIGHT
+            );
         }
+
 
         private boolean isHoveredOrFocusedUsingKeyboard() {
             return this.isHovered() || this.isFocused() && Minecraft.getInstance().getLastInputType().isKeyboard();
@@ -750,9 +765,14 @@ public final class CodeBookScreen extends Screen {
         }
 
         @Override
-        public void renderWidget(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTicks) {
+        protected void renderContents(GuiGraphics guiGraphics, int i, int i1, float v) {
             final int offsetX = isHoveredOrFocusedUsingKeyboard() ? BUTTON_WIDTH : 0;
-            graphics.blit(Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, getX(), getY(), TEXTURE_X + offsetX, TEXTURE_Y, BUTTON_WIDTH, BUTTON_HEIGHT);
+            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
+                BUTTON_WIDTH, BUTTON_HEIGHT,
+                TEXTURE_X + offsetX, TEXTURE_Y,
+                getX(), getY(),
+                BUTTON_WIDTH, BUTTON_HEIGHT
+            );
         }
 
         private boolean isHoveredOrFocusedUsingKeyboard() {

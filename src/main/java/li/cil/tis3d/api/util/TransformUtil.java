@@ -9,6 +9,9 @@ import net.minecraft.world.phys.Vec3;
  * Utility class for coordinate transformation related operations.
  */
 public final class TransformUtil {
+    private TransformUtil() {
+    }
+
     /**
      * Project a hit position on the surface of a block to a UV coordinate on
      * the that side.
@@ -27,6 +30,8 @@ public final class TransformUtil {
             case X_POS -> new Vec3(1 - hitPos.z, 1 - hitPos.y, 0);
         };
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Project a hit position on the surface of a block to a UV coordinate on
@@ -57,10 +62,5 @@ public final class TransformUtil {
             };
             default -> uv;
         };
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private TransformUtil() {
     }
 }

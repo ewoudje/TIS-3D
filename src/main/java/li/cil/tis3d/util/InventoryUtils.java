@@ -14,6 +14,9 @@ import javax.annotation.Nullable;
  * Utility class for interacting with inventories.
  */
 public final class InventoryUtils {
+    private InventoryUtils() {
+    }
+
     /**
      * Drop some items from an inventory into a level.
      *
@@ -30,6 +33,8 @@ public final class InventoryUtils {
         final ItemStack stack = inventory.removeItem(index, count);
         return spawnStackInLevel(level, pos, stack, towards);
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Spawns an item stack in the level.
@@ -69,10 +74,5 @@ public final class InventoryUtils {
         level.addFreshEntity(entity);
 
         return entity;
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private InventoryUtils() {
     }
 }

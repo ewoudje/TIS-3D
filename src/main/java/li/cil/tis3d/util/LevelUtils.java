@@ -5,6 +5,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 public final class LevelUtils {
+    private LevelUtils() {
+    }
+
+    // --------------------------------------------------------------------- //
+
     /**
      * Check whether a block is within a loaded chunk.
      * <p>
@@ -17,10 +22,5 @@ public final class LevelUtils {
     public static boolean isLoaded(final Level level, final BlockPos pos) {
         final ChunkPos chunkPos = new ChunkPos(pos);
         return level.getChunkSource().hasChunk(chunkPos.x, chunkPos.z);
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private LevelUtils() {
     }
 }

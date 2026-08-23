@@ -10,6 +10,8 @@ import li.cil.tis3d.util.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,10 +25,8 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
     private static final int CELL_WIDTH = 10;
     private static final int CELL_HEIGHT = 7;
     private static final String LABEL_INITIALIZING = "INITIALIZING...";
-
-    private final byte[] data = new byte[RandomAccessMemoryModule.MEMORY_SIZE];
-
     private static int selectedCell = 0;
+    private final byte[] data = new byte[RandomAccessMemoryModule.MEMORY_SIZE];
     private boolean highNibble = true;
     private boolean receivedData;
     private long initTime;
@@ -62,7 +62,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
     @Override
     public void render(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
-        final MultiBufferSource.BufferSource buffer = graphics.bufferSource();
+        final MultiBufferSource.BufferSource buffer = null; //TODO graphics.bufferSource();
 
         // Draw row and column headers.
         drawHeaders(graphics, buffer);
@@ -86,7 +86,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
 
     @Override
     protected void renderBg(final GuiGraphics graphics, final float partialTicks, final int x, final int y) {
-        graphics.blit(Textures.LOCATION_GUI_MEMORY, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        graphics.blit(Textures.LOCATION_GUI_MEMORY, imageWidth, imageHeight, leftPos, topPos, 0, 0, imageWidth, imageHeight);
     }
 
     @Override
@@ -95,22 +95,27 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
     }
 
     @Override
-    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
-        selectCellAt(mouseX, mouseY);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (super.mouseClicked(event, doubleClick))
+            return true;
+
+        selectCellAt(event.x(), event.y());
+        return true;
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (super.mouseDragged(event, dragX, dragY))
+            return true;
+
+        selectCellAt(event.x(), event.y());
 
         return true;
     }
 
     @Override
-    public boolean mouseDragged(final double mouseX, final double mouseY, final int button, final double dragX, final double dragY) {
-        selectCellAt(mouseX, mouseY);
-
-        return true;
-    }
-
-    @Override
-    public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+    public boolean keyPressed(KeyEvent event) {
+        if (event.isEscape()) {
             onClose();
             return true;
         }
@@ -119,7 +124,9 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
             return false;
         }
 
+        final int keyCode = event.key();
         final int digit = Character.digit(keyCode, 16);
+
         if (digit >= 0) {
             byte value = data[selectedCell];
             if (highNibble) {
@@ -178,11 +185,6 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         return true;
     }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
-
     // --------------------------------------------------------------------- //
 
     public Minecraft getMinecraft() {
@@ -210,22 +212,22 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
     private void drawHeaders(final GuiGraphics graphics, final MultiBufferSource buffer) {
         // Columns headers (top).
         final var matrixStack = graphics.pose();
-        matrixStack.pushPose();
-        matrixStack.translate(leftPos + GRID_LEFT + 3, topPos + 6, 0);
+        matrixStack.pushMatrix();
+        matrixStack.translate(leftPos + GRID_LEFT + 3, topPos + 6);
         for (int col = 0; col < 16; col++) {
-            API.smallFontRenderer.drawInBatch(String.format("%X", col), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
-            matrixStack.translate(CELL_WIDTH, 0, 0);
+            //TODO API.smallFontRenderer.drawInBatch(String.format("%X", col), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
+            matrixStack.translate(CELL_WIDTH, 0);
         }
-        matrixStack.popPose();
+        matrixStack.popMatrix();
 
         // Row headers (left).
-        matrixStack.pushPose();
-        matrixStack.translate(leftPos + 7, topPos + 14, 0);
+        matrixStack.pushMatrix();
+        matrixStack.translate(leftPos + 7, topPos + 14);
         for (int row = 0; row < 16; row++) {
-            API.smallFontRenderer.drawInBatch(String.format("0X%X0", row), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
-            matrixStack.translate(0, CELL_HEIGHT, 0);
+            //TODO API.smallFontRenderer.drawInBatch(String.format("0X%X0", row), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
+            matrixStack.translate(0, CELL_HEIGHT);
         }
-        matrixStack.popPose();
+        matrixStack.popMatrix();
     }
 
     private void drawInitializing(final GuiGraphics graphics, final MultiBufferSource buffer) {
@@ -240,10 +242,10 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         final int labelWidth = API.smallFontRenderer.width(LABEL_INITIALIZING);
 
         final var matrixStack = graphics.pose();
-        matrixStack.pushPose();
-        matrixStack.translate((float) (leftPos + GRID_LEFT + 3 + 7 * CELL_WIDTH - labelWidth / 2), topPos + GRID_TOP + 1 + 7 * CELL_HEIGHT, 0);
-        API.smallFontRenderer.drawInBatch(LABEL_INITIALIZING, color, matrixStack.last().pose(), buffer);
-        matrixStack.popPose();
+        matrixStack.pushMatrix();
+        matrixStack.translate((float) (leftPos + GRID_LEFT + 3 + 7 * CELL_WIDTH - labelWidth / 2), topPos + GRID_TOP + 1 + 7 * CELL_HEIGHT);
+        //TODO API.smallFontRenderer.drawInBatch(LABEL_INITIALIZING, color, new Matrix4f(matrixStack), buffer);
+        matrixStack.popMatrix();
     }
 
     private void drawMemory(final GuiGraphics graphics, final MultiBufferSource buffer) {
@@ -253,8 +255,8 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         final int selectedY = selectedCell / 0x0F;
 
         final var matrixStack = graphics.pose();
-        matrixStack.pushPose();
-        matrixStack.translate(leftPos + GRID_LEFT + 1, topPos + GRID_TOP + 1, 0);
+        matrixStack.pushMatrix();
+        matrixStack.translate(leftPos + GRID_LEFT + 1, topPos + GRID_TOP + 1);
         for (int i = 0, count = Math.min(visibleCells, data.length); i < count; i++) {
             final int col = i & 0x0F;
             final int row = i / 0x0F;
@@ -272,15 +274,15 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
             final float brightness = (float) Math.min(1, Math.max(0.8, 1 - distance / 32));
             final int color = Color.monochrome(brightness);
 
-            API.smallFontRenderer.drawInBatch(String.format("%02X", data[i]), color, matrixStack.last().pose(), buffer);
+            //TODO API.smallFontRenderer.drawInBatch(String.format("%02X", data[i]), color, matrixStack.last().pose(), buffer);
 
             if (col < 0x0F) {
-                matrixStack.translate(CELL_WIDTH, 0, 0);
+                matrixStack.translate(CELL_WIDTH, 0);
             } else {
-                matrixStack.translate(-CELL_WIDTH * 0x0F, CELL_HEIGHT, 0);
+                matrixStack.translate(-CELL_WIDTH * 0x0F, CELL_HEIGHT);
             }
         }
-        matrixStack.popPose();
+        matrixStack.popMatrix();
     }
 
     private void drawSelectionBox(final GuiGraphics graphics) {
@@ -296,13 +298,13 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         final int y = topPos + GRID_TOP + CELL_HEIGHT * row - 1;
 
         final var matrixStack = graphics.pose();
-        matrixStack.pushPose();
-        matrixStack.translate(x, y, 0);
+        matrixStack.pushMatrix();
+        matrixStack.translate(x, y);
 
         final var level = getMinecraft().level;
         final int vPos = level != null ? (int) (level.getGameTime() % 16) * 8 : 0;
-        graphics.blit(Textures.LOCATION_GUI_MEMORY, 0, 0, 256 - (CELL_WIDTH + 1), vPos, 11, 8);
+        //TODO graphics.blit(Textures.LOCATION_GUI_MEMORY, 0, 0, 256 - (CELL_WIDTH + 1), vPos, 11, 8);
 
-        matrixStack.popPose();
+        matrixStack.popMatrix();
     }
 }

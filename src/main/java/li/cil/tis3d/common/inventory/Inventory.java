@@ -25,10 +25,10 @@ public class Inventory implements Container {
     // --------------------------------------------------------------------- //
 
     public void load(final CompoundTag tag, HolderLookup.Provider provider) {
-        final ListTag itemList = tag.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
+        final ListTag itemList = tag.getListOrEmpty(TAG_ITEMS);
         final int count = Math.min(itemList.size(), items.length);
         for (int index = 0; index < count; index++) {
-            items[index] = ItemStack.parseOptional(provider, itemList.getCompound(index));
+            //TODO items[index] = ItemStack.MAP_CODEC .parseOptional(provider, itemList.getCompound(index));
         }
     }
 
@@ -37,7 +37,7 @@ public class Inventory implements Container {
         for (final ItemStack stack : items) {
             Tag stackTag = new CompoundTag();
             if (stack != null && !stack.isEmpty()) {
-                stackTag = stack.save(provider, stackTag);
+                //TODO stackTag = stack.save(provider, stackTag);
             }
             itemList.add(stackTag);
         }

@@ -3,6 +3,7 @@ package li.cil.tis3d.common.item;
 import li.cil.tis3d.common.block.Blocks;
 import li.cil.tis3d.util.RegistryUtils;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -10,6 +11,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -62,19 +64,21 @@ public final class Items {
 
     // --------------------------------------------------------------------- //
 
-    private static DeferredHolder<Item, Item>register(final String name) {
+    private static DeferredHolder<Item, Item> register(final String name) {
         return register(name, ModItem::new);
     }
 
-    private static <T extends Item> DeferredHolder<Item, T> register(final String name, final Supplier<T> factory) {
-        return ITEMS.register(name, factory);
+    private static <T extends Item> DeferredHolder<Item, T> register(final String name, final Function<Item.Properties, T> factory) {
+        return ITEMS.register(name, registryName ->
+            factory.apply(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, registryName)))
+        );
     }
 
     private static <T extends Block> DeferredHolder<Item, Item> register(final DeferredHolder<Block, T> block) {
         return register(block, ModBlockItem::new);
     }
 
-    private static <TBlock extends Block, TItem extends Item> DeferredHolder<Item, TItem> register(final DeferredHolder<Block, TBlock> block, final Function<TBlock, TItem> factory) {
-        return register(block.getId().getPath(), () -> factory.apply(block.get()));
+    private static <TBlock extends Block, TItem extends Item> DeferredHolder<Item, TItem> register(final DeferredHolder<Block, TBlock> block, final BiFunction<TBlock, Item.Properties, TItem> factory) {
+        return register(block.getId().getPath(), p -> factory.apply(block.get(), p));
     }
 }

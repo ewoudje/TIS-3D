@@ -5,7 +5,7 @@ import li.cil.tis3d.api.prefab.module.AbstractModule;
 import li.cil.tis3d.client.gui.TerminalModuleScreen;
 import li.cil.tis3d.client.renderer.block.entity.CasingBlockEntityRenderer;
 import li.cil.tis3d.client.renderer.block.entity.ControllerBlockEntityRenderer;
-import li.cil.tis3d.client.renderer.block.neoforge.ModuleModelLoader;
+import li.cil.tis3d.client.renderer.block.ModuleModelLoader;
 import li.cil.tis3d.client.renderer.font.NormalFontRenderer;
 import li.cil.tis3d.client.renderer.font.SmallFontRenderer;
 import li.cil.tis3d.common.block.entity.BlockEntities;
@@ -40,7 +40,7 @@ public final class ClientSetup {
     }
 
 
-    public static void handleModelRegistryEvent(ModelEvent.RegisterGeometryLoaders event) {
+    public static void handleModelRegistryEvent(ModelEvent.RegisterLoaders event) {
         event.register(API.resource("module"), new ModuleModelLoader());
     }
 }

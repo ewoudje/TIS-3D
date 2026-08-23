@@ -6,6 +6,8 @@ import li.cil.tis3d.util.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -37,11 +39,12 @@ public final class TerminalModuleScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
-        if (super.keyPressed(keyCode, scanCode, modifiers)) {
+    public boolean keyPressed(KeyEvent event) {
+        if (super.keyPressed(event)) {
             return true;
         }
 
+        final int keyCode = event.key();
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             return true;
         } else if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
@@ -59,13 +62,13 @@ public final class TerminalModuleScreen extends Screen {
     }
 
     @Override
-    public boolean charTyped(final char typedChar, final int modifiers) {
-        if (super.charTyped(typedChar, modifiers)) {
+    public boolean charTyped(CharacterEvent event) {
+        if (super.charTyped(event)) {
             return true;
         }
 
-        if (typedChar != '\0') {
-            writeToModule(typedChar);
+        if (event.codepoint() != '\0') {
+            writeToModule((char) event.codepoint());
             return true;
         }
 
@@ -84,6 +87,11 @@ public final class TerminalModuleScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public boolean isInGameUi() {
+        return true;
     }
 
     // --------------------------------------------------------------------- //

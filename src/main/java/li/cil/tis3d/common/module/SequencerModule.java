@@ -23,34 +23,51 @@ public final class SequencerModule extends AbstractModuleWithRotation {
 
     // --------------------------------------------------------------------- //
     // Persisted data
+    public static final int COL_COUNT = 8;
+    public static final int ROW_COUNT = 8;
+    // NBT data names.
+    private static final String TAG_CONFIGURATION = "configuration";
+    private static final String TAG_POSITION = "position";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
+    private static final String TAG_DELAY = "delay";
+    private static final String TAG_STEPS_REMAINING = "stepsRemaining";
+    // Data packet types.
+    private static final byte DATA_TYPE_CONFIGURATION = 0;
+    private static final byte DATA_TYPE_POSITION = 1;
     private final boolean[][] configuration = new boolean[COL_COUNT][ROW_COUNT];
     private int position = -1;
     private int delay = 4;
     private int stepsRemaining = 0;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
-    // NBT data names.
-    private static final String TAG_CONFIGURATION = "configuration";
-    private static final String TAG_POSITION = "position";
-    private static final String TAG_DELAY = "delay";
-    private static final String TAG_STEPS_REMAINING = "stepsRemaining";
-
-    // Data packet types.
-    private static final byte DATA_TYPE_CONFIGURATION = 0;
-    private static final byte DATA_TYPE_POSITION = 1;
-
-    public static final int COL_COUNT = 8;
-    public static final int ROW_COUNT = 8;
-
     private short output;
 
     // --------------------------------------------------------------------- //
 
     public SequencerModule(final Casing casing, final Face face) {
         super(casing, face);
+    }
+
+    private static long encodeConfiguration(final boolean[][] configuration) {
+        long encodedConfiguration = 0L;
+        long mask = 1;
+        for (int col = 0; col < COL_COUNT; col++) {
+            for (int row = 0; row < ROW_COUNT; row++, mask <<= 1L) {
+                if (configuration[col][row]) {
+                    encodedConfiguration |= mask;
+                }
+            }
+        }
+        return encodedConfiguration;
+    }
+
+    private static void decodeConfiguration(final long encodedConfiguration, final boolean[][] configuration) {
+        long mask = 1;
+        for (int col = 0; col < COL_COUNT; col++) {
+            for (int row = 0; row < ROW_COUNT; row++, mask <<= 1L) {
+                configuration[col][row] = (encodedConfiguration & mask) != 0;
+            }
+        }
     }
 
     public boolean isConfigured(int col, int row) {
@@ -61,6 +78,9 @@ public final class SequencerModule extends AbstractModuleWithRotation {
         return position;
     }
 
+    // --------------------------------------------------------------------- //
+    // Module
+
     public int getDelay() {
         return delay;
     }
@@ -68,9 +88,6 @@ public final class SequencerModule extends AbstractModuleWithRotation {
     public int getStepsRemaining() {
         return stepsRemaining;
     }
-
-    // --------------------------------------------------------------------- //
-    // Module
 
     @Override
     public void step() {
@@ -127,14 +144,16 @@ public final class SequencerModule extends AbstractModuleWithRotation {
         getCasing().setChanged();
     }
 
+    // --------------------------------------------------------------------- //
+
     @Override
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        decodeConfiguration(tag.getLong(TAG_CONFIGURATION), configuration);
-        position = Math.min(Math.max(tag.getInt(TAG_POSITION), 0), COL_COUNT - 1);
-        delay = Math.min(Math.max(tag.getInt(TAG_DELAY), 0), 0xFFFF);
-        stepsRemaining = Math.min(Math.max(tag.getInt(TAG_STEPS_REMAINING), 0), 0xFFFF);
+        decodeConfiguration(tag.getLongOr(TAG_CONFIGURATION, 0), configuration);
+        position = Math.clamp(tag.getIntOr(TAG_POSITION, 0), 0, COL_COUNT - 1);
+        delay = Math.clamp(tag.getIntOr(TAG_DELAY, 0), 0, 0xFFFF);
+        stepsRemaining = Math.clamp(tag.getIntOr(TAG_STEPS_REMAINING, 0), 0, 0xFFFF);
 
         initializeOutput();
     }
@@ -148,8 +167,6 @@ public final class SequencerModule extends AbstractModuleWithRotation {
         tag.putInt(TAG_DELAY, delay);
         tag.putInt(TAG_STEPS_REMAINING, stepsRemaining);
     }
-
-    // --------------------------------------------------------------------- //
 
     private void stepOutput() {
         if (stepsRemaining-- <= 0) {
@@ -203,28 +220,6 @@ public final class SequencerModule extends AbstractModuleWithRotation {
         for (int mask = 1, row = 0; row < ROW_COUNT; row++, mask <<= 1) {
             if (configuration[position][row]) {
                 output |= mask;
-            }
-        }
-    }
-
-    private static long encodeConfiguration(final boolean[][] configuration) {
-        long encodedConfiguration = 0L;
-        long mask = 1;
-        for (int col = 0; col < COL_COUNT; col++) {
-            for (int row = 0; row < ROW_COUNT; row++, mask <<= 1L) {
-                if (configuration[col][row]) {
-                    encodedConfiguration |= mask;
-                }
-            }
-        }
-        return encodedConfiguration;
-    }
-
-    private static void decodeConfiguration(final long encodedConfiguration, final boolean[][] configuration) {
-        long mask = 1;
-        for (int col = 0; col < COL_COUNT; col++) {
-            for (int row = 0; row < ROW_COUNT; row++, mask <<= 1L) {
-                configuration[col][row] = (encodedConfiguration & mask) != 0;
             }
         }
     }

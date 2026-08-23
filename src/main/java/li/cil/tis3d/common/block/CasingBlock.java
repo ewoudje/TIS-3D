@@ -10,15 +10,13 @@ import li.cil.tis3d.common.block.entity.BlockEntities;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.util.InventoryUtils;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.Containers;
+import net.minecraft.util.Util;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -35,9 +33,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
 import java.util.EnumMap;
@@ -47,15 +46,12 @@ import java.util.Optional;
  * Block for the module casings.
  */
 public class CasingBlock extends BaseEntityBlock {
-    public static final MapCodec<CasingBlock> CODEC = simpleCodec(CasingBlock::new);
-
     public static final BooleanProperty MODULE_X_NEG = BooleanProperty.create("xneg");
     public static final BooleanProperty MODULE_X_POS = BooleanProperty.create("xpos");
     public static final BooleanProperty MODULE_Y_NEG = BooleanProperty.create("yneg");
     public static final BooleanProperty MODULE_Y_POS = BooleanProperty.create("ypos");
     public static final BooleanProperty MODULE_Z_NEG = BooleanProperty.create("zneg");
     public static final BooleanProperty MODULE_Z_POS = BooleanProperty.create("zpos");
-
     public static final EnumMap<Face, BooleanProperty> FACE_TO_PROPERTY = Util.make(() -> {
         final EnumMap<Face, BooleanProperty> map = new EnumMap<>(Face.class);
         map.put(Face.X_NEG, MODULE_X_NEG);
@@ -66,13 +62,9 @@ public class CasingBlock extends BaseEntityBlock {
         map.put(Face.Z_POS, MODULE_Z_POS);
         return map;
     });
+    public static final MapCodec<CasingBlock> CODEC = simpleCodec(CasingBlock::new);
 
     // --------------------------------------------------------------------- //
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
 
     public CasingBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -84,8 +76,28 @@ public class CasingBlock extends BaseEntityBlock {
         registerDefaultState(defaultState);
     }
 
+    public static Optional<InteractionResult> useIfCasing(final UseOnContext context) {
+        final var player = context.getPlayer();
+        if (player != null) {
+            final var state = context.getLevel().getBlockState(context.getClickedPos());
+            if (state.getBlock() instanceof final CasingBlock casing) {
+                final var hit = new BlockHitResult(context.getClickLocation(), context.getClickedFace(), context.getClickedPos(), context.isInside());
+                return Optional.of(casing.useItemOn(context.getItemInHand(), state, context.getLevel(), context.getClickedPos(), context.getPlayer(), context.getHand(), hit));
+            }
+        }
+        return Optional.empty();
+    }
+
     // --------------------------------------------------------------------- //
     // State
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    // --------------------------------------------------------------------- //
+    // BaseEntityBlock
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.Builder<Block, BlockState> builder) {
@@ -95,42 +107,27 @@ public class CasingBlock extends BaseEntityBlock {
         }
     }
 
-    // --------------------------------------------------------------------- //
-    // BaseEntityBlock
-
     @Nullable
     @Override
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return BlockEntities.CASING.get().create(pos, state);
     }
 
+    // --------------------------------------------------------------------- //
+    // Common
+
     @Override
     public RenderShape getRenderShape(final BlockState state) {
         return RenderShape.MODEL;
     }
 
-    // --------------------------------------------------------------------- //
-    // Common
-
-    public static Optional<InteractionResult> useIfCasing(final UseOnContext context) {
-        final var player = context.getPlayer();
-        if (player != null) {
-            final var state = context.getLevel().getBlockState(context.getClickedPos());
-            if (state.getBlock() instanceof final CasingBlock casing) {
-                final var hit = new BlockHitResult(context.getClickLocation(), context.getClickedFace(), context.getClickedPos(), context.isInside());
-                return Optional.of(casing.useItemOn(context.getItemInHand(), state, context.getLevel(), context.getClickedPos(), context.getPlayer(), context.getHand(), hit).result());
-            }
-        }
-        return Optional.empty();
-    }
-
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        return this.useItemOn(ItemStack.EMPTY, state, level, pos, player, InteractionHand.MAIN_HAND, hit).result();
+        return this.useItemOn(ItemStack.EMPTY, state, level, pos, player, InteractionHand.MAIN_HAND, hit);
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    protected InteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         final BlockEntity blockEntity = level.getBlockEntity(pos);
         if (!(blockEntity instanceof final CasingBlockEntity casing))
             throw new RuntimeException("Not us?");
@@ -157,13 +154,13 @@ public class CasingBlock extends BaseEntityBlock {
                 }
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         // Let the module handle the activation.
         final Module module = casing.getModule(Face.fromDirection(side));
         if (module != null && module.use(player, hand, localHitPos)) {
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         // Don't allow changing modules while casing is locked.
@@ -184,7 +181,7 @@ public class CasingBlock extends BaseEntityBlock {
                 }
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         } else if (casing.canPlaceItemThroughFace(side.ordinal(), heldItem, side)) {
             if (!level.isClientSide()) {
                 final ItemStack insertedStack;
@@ -205,36 +202,24 @@ public class CasingBlock extends BaseEntityBlock {
                 level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 0.2f, 0.8f + level.random.nextFloat() * 0.1f);
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         return super.useItemOn(heldItem, state, level, pos, player, hand, hit);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState newState, final boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            final BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof final CasingBlockEntity casing) {
-                Containers.dropContents(level, pos, casing);
-                level.updateNeighbourForOutputSignal(pos, this);
-            }
-            super.onRemove(state, level, pos, newState, isMoving);
-        }
-    }
-
-    @Override
-    public ItemStack getCloneItemStack(final BlockState state, final HitResult hit, final LevelReader level, final BlockPos pos, final Player player) {
+    public @NonNull ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData, Player player) {
         // Allow picking modules installed in the casing.
         final BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (blockEntity instanceof final CasingBlockEntity casing && hit instanceof final BlockHitResult blockHit) {
-            final ItemStack stack = casing.getItem(blockHit.getDirection().ordinal());
+
+        if (blockEntity instanceof final CasingBlockEntity casing) {
+            final ItemStack stack = casing.getItem(player.getDirection().getOpposite().ordinal());
             if (!stack.isEmpty()) {
                 return stack.copy();
             }
         }
-        return super.getCloneItemStack(state, hit, level, pos, player);
+        return super.getCloneItemStack(level, pos, state, includeData, player);
     }
 
     // --------------------------------------------------------------------- //
@@ -246,9 +231,8 @@ public class CasingBlock extends BaseEntityBlock {
         return true;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public int getAnalogOutputSignal(final BlockState state, final Level level, final BlockPos pos) {
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
         return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 
@@ -274,15 +258,16 @@ public class CasingBlock extends BaseEntityBlock {
     // --------------------------------------------------------------------- //
     // Networking
 
-    @SuppressWarnings("deprecation")
+
     @Override
-    public void neighborChanged(final BlockState state, final Level level, final BlockPos pos, final Block block, final BlockPos fromPos, final boolean isMoving) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         final BlockEntity blockEntity = level.getBlockEntity(pos);
         if (blockEntity instanceof final CasingBlockEntity casing) {
             casing.checkNeighbors();
-            casing.notifyModulesOfBlockChange(fromPos);
+            // TODO casing.notifyModulesOfBlockChange(pos.offset(orientation));
             casing.markRedstoneDirty();
         }
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
     }
 }

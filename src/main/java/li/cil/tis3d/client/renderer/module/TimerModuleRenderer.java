@@ -31,7 +31,7 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
 
         // Render detailed state when player is close.
         if (!module.hasElapsed() && context.closeEnoughForDetails(module.getCasing().getPosition())) {
-            final long gameTime = context.getDispatcher().level.getGameTime();
+            final long gameTime = 0; //TODO context.getDispatcher().level.getGameTime();
             final float remaining = (float) (module.getTimer() - gameTime) - context.getPartialTicks();
             if (remaining <= 0) {
                 module.elapsed();

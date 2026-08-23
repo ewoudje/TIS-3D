@@ -1,25 +1,18 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
 import li.cil.tis3d.client.gui.TerminalModuleScreen;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -41,33 +34,13 @@ import java.util.List;
 public final class TerminalModule extends AbstractModuleWithRotation {
     // Persisted data
 
-    /**
-     * Current displayed text, line by line.
-     * <p>
-     * As a linked list to allow fast removal from head an appending to tail
-     * when scrolling (due to new line coming in and being at bottom of the
-     * terminal screen).
-     */
-    private final LinkedList<StringBuilder> display = new LinkedList<>();
-
-    /**
-     * Current pending output, single line.
-     * <p>
-     * This is used to store pending output to be read from the terminal
-     * module, in *reverse order* (so we can pop from the back).
-     */
-    private final StringBuilder output = new StringBuilder();
-
-    /**
-     * Current input, single line.
-     * <p>
-     * Only used on the client to store local user output.
-     */
-    private final StringBuilder input = new StringBuilder();
+    // Rendering/state constants.
+    public static final int MAX_ROWS = 21;
+    public static final int MAX_COLUMNS = 40;
+    public static final int TAB_WIDTH = 2;
 
     // --------------------------------------------------------------------- //
     // Computed data
-
     // NBT tag names.
     private static final String TAG_DISPLAY = "display";
     private static final String TAG_OUTPUT = "output";
@@ -79,17 +52,31 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     private static final byte PACKET_INPUT = 0;
     private static final byte PACKET_DISPLAY = 1;
     private static final byte PACKET_CLEAR = 2;
-
-    // Rendering/state constants.
-    public static final int MAX_ROWS = 21;
-    public static final int MAX_COLUMNS = 40;
-    public static final int TAB_WIDTH = 2;
-
     // For string<->byte[] conversion when sending input to server.
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
     // For short<->char conversion when reading/writing from/to ports.
     private static final Charset CP437 = Charset.forName("Cp437");
-
+    /**
+     * Current displayed text, line by line.
+     * <p>
+     * As a linked list to allow fast removal from head an appending to tail
+     * when scrolling (due to new line coming in and being at bottom of the
+     * terminal screen).
+     */
+    private final LinkedList<StringBuilder> display = new LinkedList<>();
+    /**
+     * Current pending output, single line.
+     * <p>
+     * This is used to store pending output to be read from the terminal
+     * module, in *reverse order* (so we can pop from the back).
+     */
+    private final StringBuilder output = new StringBuilder();
+    /**
+     * Current input, single line.
+     * <p>
+     * Only used on the client to store local user output.
+     */
+    private final StringBuilder input = new StringBuilder();
     // Reused buffers for converting between CP437 and chars.
     private final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
     private final CharBuffer charBuffer = CharBuffer.allocate(1);
@@ -111,6 +98,44 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         super(casing, face);
     }
 
+    private static void writeString(final ByteBuf data, final String value) {
+        final byte[] bytes = value.getBytes(UTF_8);
+        final int byteCount = Math.min(0xFF, bytes.length);
+        data.writeByte((byte) byteCount);
+        data.writeBytes(bytes, 0, byteCount);
+    }
+
+    private static String readString(final ByteBuf data) {
+        final int byteCount = data.readByte() & 0xFF;
+        final byte[] bytes = new byte[byteCount];
+        data.readBytes(bytes);
+        return new String(bytes, UTF_8);
+    }
+
+    private static void backspace(final StringBuilder line) {
+        if (!line.isEmpty()) {
+            line.setLength(line.length() - 1);
+        }
+    }
+
+    // --------------------------------------------------------------------- //
+    // Module
+
+    private static void tab(final StringBuilder line) {
+        if (line.length() < MAX_COLUMNS) {
+            do {
+                line.append(' ');
+            }
+            while (line.length() % TAB_WIDTH != 0 && line.length() < MAX_COLUMNS);
+        }
+    }
+
+    private static void character(final StringBuilder line, final char ch) {
+        if (line.length() < MAX_COLUMNS) {
+            line.append(ch);
+        }
+    }
+
     public List<StringBuilder> getDisplay() {
         return display;
     }
@@ -122,9 +147,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     public boolean isInputEnabled() {
         return isInputEnabled;
     }
-
-    // --------------------------------------------------------------------- //
-    // Module
 
     @Override
     public void step() {
@@ -170,6 +192,8 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         cancelWrite();
     }
 
+    // --------------------------------------------------------------------- //
+
     @Override
     public void onWriteComplete(final Port port) {
         // Re-cancel in case step() was called after onBeforeWriteComplete() to
@@ -203,6 +227,9 @@ public final class TerminalModule extends AbstractModuleWithRotation {
 
         return true;
     }
+
+    // --------------------------------------------------------------------- //
+    // Rendering
 
     @Override
     public void onData(final ByteBuf data) {
@@ -239,16 +266,19 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        final ListTag lines = tag.getList(TAG_DISPLAY, Tag.TAG_STRING);
+        final ListTag lines = tag.getListOrEmpty(TAG_DISPLAY);
         display.clear();
         for (int tagIndex = 0; tagIndex < lines.size(); tagIndex++) {
-            display.add(new StringBuilder(lines.getString(tagIndex)));
+            display.add(new StringBuilder(lines.getString(tagIndex).orElseThrow()));
         }
 
         output.setLength(0);
         output.append(tag.getString(TAG_OUTPUT));
         isInputEnabled = output.isEmpty();
     }
+
+    // --------------------------------------------------------------------- //
+    // Networking
 
     @Override
     public void save(final CompoundTag tag) {
@@ -262,8 +292,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
 
         tag.putString(TAG_OUTPUT, output.toString());
     }
-
-    // --------------------------------------------------------------------- //
 
     private void stepInput() {
         for (final Port port : Port.VALUES) {
@@ -292,9 +320,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         }
     }
 
-    // --------------------------------------------------------------------- //
-    // Rendering
-
     @OnlyIn(Dist.CLIENT)
     private void openScreen() {
         Minecraft.getInstance().setScreen(new TerminalModuleScreen(this));
@@ -312,7 +337,7 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     }
 
     // --------------------------------------------------------------------- //
-    // Networking
+    // Input processing
 
     private void sendInputEnabled(final boolean value) {
         final ByteBuf response = Unpooled.buffer();
@@ -334,23 +359,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         writeString(data, input.toString());
         getCasing().sendData(getFace(), data, DATA_TYPE_INPUT);
     }
-
-    private static void writeString(final ByteBuf data, final String value) {
-        final byte[] bytes = value.getBytes(UTF_8);
-        final int byteCount = Math.min(0xFF, bytes.length);
-        data.writeByte((byte) byteCount);
-        data.writeBytes(bytes, 0, byteCount);
-    }
-
-    private static String readString(final ByteBuf data) {
-        final int byteCount = data.readByte() & 0xFF;
-        final byte[] bytes = new byte[byteCount];
-        data.readBytes(bytes);
-        return new String(bytes, UTF_8);
-    }
-
-    // --------------------------------------------------------------------- //
-    // Input processing
 
     private char toChar(final short value) {
         byteBuffer.clear();
@@ -418,27 +426,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         final Level level = getCasing().getCasingLevel();
         if (!level.isClientSide()) {
             level.playSound(null, getCasing().getPosition(), SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.BLOCKS, 0.3f, 2f);
-        }
-    }
-
-    private static void backspace(final StringBuilder line) {
-        if (!line.isEmpty()) {
-            line.setLength(line.length() - 1);
-        }
-    }
-
-    private static void tab(final StringBuilder line) {
-        if (line.length() < MAX_COLUMNS) {
-            do {
-                line.append(' ');
-            }
-            while (line.length() % TAB_WIDTH != 0 && line.length() < MAX_COLUMNS);
-        }
-    }
-
-    private static void character(final StringBuilder line, final char ch) {
-        if (line.length() < MAX_COLUMNS) {
-            line.append(ch);
         }
     }
 

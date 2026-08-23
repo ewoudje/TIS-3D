@@ -3,10 +3,21 @@
     "loader": "tis3d:module",
     "elements": [
         {
-            "from": [ 0, 0, 0 ],
-            "to": [ 16, 16, 16 ],
+            "from": [
+                0,
+                0,
+                0
+            ],
+            "to": [
+                16,
+                16,
+                16
+            ],
             "faces": {
-                "south": { "texture": "#module", "cullface": "south" }
+                "south": {
+                    "texture": "#module",
+                    "cullface": "south"
+                }
             }
         }
     ],

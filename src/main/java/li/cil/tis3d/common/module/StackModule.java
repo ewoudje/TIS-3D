@@ -1,22 +1,14 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * The stack module can be used to store a number of values to be retrieved
@@ -29,23 +21,20 @@ public final class StackModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private final short[] stack = new short[STACK_SIZE];
-    private int top = -1;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT data names.
     private static final String TAG_STACK = "stack";
     private static final String TAG_TOP = "top";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
     // Data packet types.
     private static final byte DATA_TYPE_UPDATE = 0;
-
     /**
      * The number of elements the stack may store.
      */
     private static final int STACK_SIZE = 16;
+    private final short[] stack = new short[STACK_SIZE];
+    private int top = -1;
 
     // --------------------------------------------------------------------- //
 
@@ -111,13 +100,13 @@ public final class StackModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        final int[] stackTag = tag.getIntArray(TAG_STACK);
+        final int[] stackTag = tag.getIntArray(TAG_STACK).orElse(new int[0]);
         final int count = Math.min(stackTag.length, stack.length);
         for (int i = 0; i < count; i++) {
             stack[i] = (short) stackTag[i];
         }
 
-        top = Mth.clamp(tag.getInt(TAG_TOP), -1, STACK_SIZE - 1);
+        top = Mth.clamp(tag.getIntOr(TAG_TOP, 0), -1, STACK_SIZE - 1);
     }
 
     @Override

@@ -5,9 +5,9 @@ import li.cil.tis3d.common.block.entity.BlockEntities;
 import li.cil.tis3d.common.block.entity.ControllerBlockEntity;
 import li.cil.tis3d.common.item.Items;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nullable;
@@ -31,13 +32,13 @@ public final class ControllerBlock extends BaseEntityBlock {
 
     // --------------------------------------------------------------------- //
 
+    public ControllerBlock(Properties properties) {
+        super(properties);
+    }
+
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;
-    }
-
-    public ControllerBlock(Properties properties) {
-        super(properties);
     }
 
     // --------------------------------------------------------------------- //
@@ -68,7 +69,7 @@ public final class ControllerBlock extends BaseEntityBlock {
 
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected InteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         final Item item = heldItem.getItem();
         if (item == net.minecraft.world.item.Items.BOOK) {
             if (!level.isClientSide()) {
@@ -84,7 +85,7 @@ public final class ControllerBlock extends BaseEntityBlock {
                 }
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         final BlockEntity blockEntity = level.getBlockEntity(pos);
@@ -93,7 +94,7 @@ public final class ControllerBlock extends BaseEntityBlock {
                 controller.forceStep();
             }
 
-            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         return super.useItemOn(heldItem, state, level, pos, player, hand, hitResult);
@@ -107,7 +108,7 @@ public final class ControllerBlock extends BaseEntityBlock {
                 controller.forceStep();
             }
 
-            return InteractionResult.sidedSuccess(level.isClientSide());
+            return InteractionResult.SUCCESS;
         }
 
         return super.useWithoutItem(state, level, pos, player, hitResult);
@@ -123,9 +124,8 @@ public final class ControllerBlock extends BaseEntityBlock {
         return true;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public int getAnalogOutputSignal(final BlockState state, final Level level, final BlockPos pos) {
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
         final BlockEntity blockEntity = level.getBlockEntity(pos);
         if (blockEntity instanceof final ControllerBlockEntity controller) {
             return controller.getState() == ControllerBlockEntity.ControllerState.READY ? 15 : 0;
@@ -136,13 +136,13 @@ public final class ControllerBlock extends BaseEntityBlock {
     // --------------------------------------------------------------------- //
     // Networking
 
-    @SuppressWarnings("deprecation")
+
     @Override
-    public void neighborChanged(final BlockState state, final Level level, final BlockPos pos, final Block block, final BlockPos fromPos, final boolean isMoving) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
         final BlockEntity blockEntity = level.getBlockEntity(pos);
         if (blockEntity instanceof final ControllerBlockEntity controller) {
             controller.checkNeighbors();
         }
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
     }
 }

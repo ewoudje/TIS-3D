@@ -17,73 +17,33 @@ public final class PipeImpl implements Pipe {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    /**
-     * The current state of the pipe.
-     */
-    private State readState = State.IDLE, writeState = State.IDLE;
-
-    /**
-     * The value currently being written over this pipe.
-     */
-    private short value = 0;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
-    /**
-     * Current state of the pipe, to enforce synchronization, i.e. make sure
-     * each read/write combination always takes the same amount of steps
-     * regardless of whether reader or writer ran first (when they start in
-     * the same step).
-     */
-    private enum State {
-        /**
-         * Waiting for a reader.
-         */
-        IDLE,
-
-        /**
-         * Reader registered in this update.
-         */
-        BUSY,
-
-        /**
-         * Reader has registered and is ready to receive.
-         */
-        READY,
-
-        /**
-         * Data can be read from the pipe this update.
-         */
-        FLUSHING,
-
-        /**
-         * Data was read from the pipe this update.
-         */
-        COMPLETE
-    }
-
     // NBT tag names.
     private static final String TAG_READ_STATE = "readState";
     private static final String TAG_WRITE_STATE = "writeState";
-    private static final String TAG_VALUE = "value";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
+    private static final String TAG_VALUE = "value";
     /**
      * The container this pipe belongs to.
      */
     private final PipeHost host;
-
     /**
      * The faces this pipe is connected to in the owning {@link Casing}.
      */
     private final Face receivingFace, sendingFace;
-
     /**
      * The input port of this pipe in the owning {@link Casing}.
      */
     private final Port sendingPort;
-
-    // --------------------------------------------------------------------- //
+    /**
+     * The current state of the pipe.
+     */
+    private State readState = State.IDLE, writeState = State.IDLE;
+    /**
+     * The value currently being written over this pipe.
+     */
+    private short value = 0;
 
     public PipeImpl(final PipeHost host, final Face receivingFace, final Face sendingFace, final Port sendingPort) {
         this.host = host;
@@ -91,6 +51,8 @@ public final class PipeImpl implements Pipe {
         this.sendingFace = sendingFace;
         this.sendingPort = sendingPort;
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Called from the owning {@link Casing} after
@@ -118,7 +80,7 @@ public final class PipeImpl implements Pipe {
     public void load(final CompoundTag tag) {
         readState = EnumUtils.load(State.class, TAG_READ_STATE, tag);
         writeState = EnumUtils.load(State.class, TAG_WRITE_STATE, tag);
-        value = tag.getShort(TAG_VALUE);
+        value = tag.getShortOr(TAG_VALUE, (short) 0);
     }
 
     public void save(final CompoundTag tag) {
@@ -135,9 +97,6 @@ public final class PipeImpl implements Pipe {
         host.onWriteComplete(sendingFace, sendingPort);
     }
 
-    // --------------------------------------------------------------------- //
-    // Pipe
-
     @Override
     public void beginWrite(final short value) {
         if (writeState == State.COMPLETE) { // TODO Remove in MC 1.13
@@ -151,6 +110,9 @@ public final class PipeImpl implements Pipe {
 
         host.onPipeStateChanged();
     }
+
+    // --------------------------------------------------------------------- //
+    // Pipe
 
     @Override
     public void cancelWrite() {
@@ -240,11 +202,44 @@ public final class PipeImpl implements Pipe {
         Network.sendPipeEffect(host.getPipeHostLevel(), x, y + extraOffsetY, z);
     }
 
-    // --------------------------------------------------------------------- //
-    // Object
-
     @Override
     public String toString() {
         return host.getPipeHostPosition() + ": " + sendingFace + " [" + writeState + "] -> " + receivingFace + " [" + readState + "]";
+    }
+
+    // --------------------------------------------------------------------- //
+    // Object
+
+    /**
+     * Current state of the pipe, to enforce synchronization, i.e. make sure
+     * each read/write combination always takes the same amount of steps
+     * regardless of whether reader or writer ran first (when they start in
+     * the same step).
+     */
+    private enum State {
+        /**
+         * Waiting for a reader.
+         */
+        IDLE,
+
+        /**
+         * Reader registered in this update.
+         */
+        BUSY,
+
+        /**
+         * Reader has registered and is ready to receive.
+         */
+        READY,
+
+        /**
+         * Data can be read from the pipe this update.
+         */
+        FLUSHING,
+
+        /**
+         * Data was read from the pipe this update.
+         */
+        COMPLETE
     }
 }

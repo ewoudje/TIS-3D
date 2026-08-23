@@ -17,7 +17,6 @@ import li.cil.tis3d.common.provider.ModuleProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -32,29 +31,26 @@ public final class CasingImpl implements Casing {
     // --------------------------------------------------------------------- //
     // Persisted data.
 
+    // NBT tag names.
+    private static final String TAG_MODULES = "modules";
+    private static final String TAG_KEY = "key";
+
+    // --------------------------------------------------------------------- //
+    // Computed data.
     /**
      * The {@link Module}s currently installed in this {@link Casing}.
      */
     private final Module[] modules = new Module[Face.VALUES.length];
-
+    /**
+     * The tile entity hosting this casing.
+     */
+    private final CasingBlockEntity blockEntity;
     /**
      * The key the casing is currently locked with. If this is set, players
      * cannot add or remove modules from the casing. A key with the correct
      * UUID in its tag is required to unlock a casing.
      */
     private UUID lock = null;
-
-    // --------------------------------------------------------------------- //
-    // Computed data.
-
-    // NBT tag names.
-    private static final String TAG_MODULES = "modules";
-    private static final String TAG_KEY = "key";
-
-    /**
-     * The tile entity hosting this casing.
-     */
-    private final CasingBlockEntity blockEntity;
 
     // --------------------------------------------------------------------- //
 
@@ -174,14 +170,6 @@ public final class CasingImpl implements Casing {
         blockEntity.setChanged();
     }
 
-    public void setLocked(final boolean locked) {
-        if (locked) {
-            lock = UUID.randomUUID();
-        } else {
-            lock = null;
-        }
-    }
-
     /**
      * Locks the casing and returns the key for unlocking it.
      *
@@ -262,19 +250,20 @@ public final class CasingImpl implements Casing {
             modules[index] = module;
         }
 
-        final ListTag modulesTag = tag.getList(TAG_MODULES, Tag.TAG_COMPOUND);
+        final ListTag modulesTag = tag.getListOrEmpty(TAG_MODULES);
         final int moduleCount = Math.min(modulesTag.size(), modules.length);
         for (int i = 0; i < moduleCount; i++) {
             if (modules[i] != null) {
-                modules[i].load(modulesTag.getCompound(i));
+                modules[i].load(modulesTag.getCompoundOrEmpty(i));
             }
         }
 
-        if (tag.hasUUID(TAG_KEY)) {
-            lock = tag.getUUID(TAG_KEY);
-        } else {
-            lock = null;
-        }
+
+        // if (tag.hasUUID(TAG_KEY)) {
+        //TODO    lock = tag.getUUID(TAG_KEY);
+        //} else {
+        //    lock = null;
+        //}
     }
 
     /**
@@ -294,17 +283,17 @@ public final class CasingImpl implements Casing {
         tag.put(TAG_MODULES, modulesTag);
 
         if (lock != null) {
-            tag.putUUID(TAG_KEY, lock);
+            //TODO tag.putUUID(TAG_KEY, lock);
         }
     }
-
-    // --------------------------------------------------------------------- //
-    // Casing
 
     @Override
     public Level getCasingLevel() {
         return blockEntity.getBlockEntityLevel();
     }
+
+    // --------------------------------------------------------------------- //
+    // Casing
 
     @Override
     public BlockPos getPosition() {
@@ -324,6 +313,14 @@ public final class CasingImpl implements Casing {
     @Override
     public boolean isLocked() {
         return lock != null;
+    }
+
+    public void setLocked(final boolean locked) {
+        if (locked) {
+            lock = UUID.randomUUID();
+        } else {
+            lock = null;
+        }
     }
 
     @Override

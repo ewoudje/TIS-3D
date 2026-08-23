@@ -8,12 +8,12 @@ import li.cil.tis3d.common.module.InfraredModule;
 import li.cil.tis3d.util.Raytracing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Explosion;
@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Portal;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -80,6 +82,24 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
 
     // --------------------------------------------------------------------- //
 
+    public static void onPlatformBlockCollision(final InfraredPacketEntity packet, final BlockHitResult hit, @Nullable final BlockEntity blockEntity) {
+        if (blockEntity != null && blockEntity.getLevel() != null) {
+            final var capability = blockEntity.getLevel().getCapability(Capabilities.InfraredReceiver.BLOCK, blockEntity.getBlockPos(), hit.getDirection());
+            if (capability != null) {
+                capability.onInfraredPacket(packet, hit);
+            }
+        }
+    }
+
+    public static void onPlatformEntityCollision(final InfraredPacketEntity packet, final EntityHitResult hit) {
+        final var capability = hit.getEntity().getCapability(Capabilities.InfraredReceiver.ENTITY);
+        if (capability != null) {
+            capability.onInfraredPacket(packet, hit);
+        }
+    }
+
+    // --------------------------------------------------------------------- //
+
     /**
      * Sets up the packet's starting position, velocity and value carried.
      * <p>
@@ -107,8 +127,6 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
         }
     }
 
-    // --------------------------------------------------------------------- //
-
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(DATA_VALUE, 0);
@@ -134,15 +152,15 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
     }
 
     @Override
-    protected void readAdditionalSaveData(final CompoundTag tag) {
-        lifetime = tag.getInt(TAG_LIFETIME);
-        value = tag.getShort(TAG_VALUE);
+    protected void readAdditionalSaveData(ValueInput input) {
+        lifetime = input.getIntOr(TAG_LIFETIME, 0);
+        value = (short) input.getShortOr(TAG_VALUE, (short) -1);
     }
 
     @Override
-    protected void addAdditionalSaveData(final CompoundTag tag) {
-        tag.putInt(TAG_LIFETIME, lifetime);
-        tag.putShort(TAG_VALUE, value);
+    protected void addAdditionalSaveData(ValueOutput output) {
+        output.putInt(TAG_LIFETIME, lifetime);
+        output.putShort(TAG_VALUE, value);
     }
 
     @Override
@@ -167,6 +185,11 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
     }
 
     @Override
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource damageSource, float v) {
+        return false;
+    }
+
+    @Override
     public boolean isPushable() {
         return false;
     }
@@ -181,6 +204,9 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
         return false;
     }
 
+    // --------------------------------------------------------------------- //
+    // EntitySpawnExtension
+
     @Override
     public boolean ignoreExplosion(Explosion explosion) {
         return true;
@@ -192,7 +218,7 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
     }
 
     // --------------------------------------------------------------------- //
-    // EntitySpawnExtension
+    // InfraredPacket
 
     @Override
     public void writeSpawnData(RegistryFriendlyByteBuf registryFriendlyByteBuf) {
@@ -204,9 +230,6 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
 
     }
 
-    // --------------------------------------------------------------------- //
-    // InfraredPacket
-
     @Override
     public short getPacketValue() {
         return value;
@@ -216,6 +239,8 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
     public Vec3 getPacketPosition() {
         return position();
     }
+
+    // --------------------------------------------------------------------- //
 
     @Override
     public Vec3 getPacketDirection() {
@@ -236,8 +261,6 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
             setDeltaMovement(direction.normalize().scale(TRAVEL_SPEED));
         }
     }
-
-    // --------------------------------------------------------------------- //
 
     private void setPositionAndUpdateBounds(final Vec3 pos) {
         setPos(pos.x, pos.y, pos.z);
@@ -365,21 +388,5 @@ public final class InfraredPacketEntity extends Entity implements IEntityWithCom
             receiver.onInfraredPacket(this, hit);
         }
         onPlatformEntityCollision(this, hit);
-    }
-
-    public static void onPlatformBlockCollision(final InfraredPacketEntity packet, final BlockHitResult hit, @Nullable final BlockEntity blockEntity) {
-        if (blockEntity != null && blockEntity.getLevel() != null) {
-            final var capability = blockEntity.getLevel().getCapability(Capabilities.InfraredReceiver.BLOCK, blockEntity.getBlockPos(), hit.getDirection());
-            if (capability != null) {
-                capability.onInfraredPacket(packet, hit);
-            }
-        }
-    }
-
-    public static void onPlatformEntityCollision(final InfraredPacketEntity packet, final EntityHitResult hit) {
-        final var capability = hit.getEntity().getCapability(Capabilities.InfraredReceiver.ENTITY);
-        if (capability != null) {
-            capability.onInfraredPacket(packet, hit);
-        }
     }
 }

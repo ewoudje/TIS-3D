@@ -11,7 +11,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -19,6 +18,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
@@ -28,20 +29,16 @@ public abstract class ComputerBlockEntity extends BlockEntity implements PipeHos
     // --------------------------------------------------------------------- //
     // Persisted data.
 
-    /**
-     * The flat list of all {@link Pipe}s on this casing.
-     * <p>
-     * Indexed by face and port using {@link #pack(Face, Port)}.
-     */
-    private final PipeImpl[] pipes = new PipeImpl[Face.VALUES.length * Port.VALUES.length];
-
-    // --------------------------------------------------------------------- //
-    // Computed data.
-
     // Mapping for faces and ports around edges, i.e. to get the other side
     // of an edge specified by a face and port.
     private static final Face[][] FACE_MAPPING;
+
+    // --------------------------------------------------------------------- //
+    // Computed data.
     private static final Port[][] PORT_MAPPING;
+    // NBT tag names.
+    private static final String TAG_PIPES = "pipes";
+    private static final String TAG_IS_UPDATE_TAG = "is_update_tag";
 
     static {
         FACE_MAPPING = new Face[][]{
@@ -64,10 +61,12 @@ public abstract class ComputerBlockEntity extends BlockEntity implements PipeHos
         };
     }
 
-    // NBT tag names.
-    private static final String TAG_PIPES = "pipes";
-    private static final String TAG_IS_UPDATE_TAG = "is_update_tag";
-
+    /**
+     * The flat list of all {@link Pipe}s on this casing.
+     * <p>
+     * Indexed by face and port using {@link #pack(Face, Port)}.
+     */
+    private final PipeImpl[] pipes = new PipeImpl[Face.VALUES.length * Port.VALUES.length];
     private final ComputerBlockEntity[] neighbors = new ComputerBlockEntity[Face.VALUES.length];
     private final PipeImpl[] pipeOverride = new PipeImpl[pipes.length];
 
@@ -83,216 +82,6 @@ public abstract class ComputerBlockEntity extends BlockEntity implements PipeHos
             }
         }
     }
-
-    public Level getBlockEntityLevel() {
-        return Objects.requireNonNull(getLevel());
-    }
-
-    /**
-     * Advances the logic of all pipes by calling {@link PipeImpl#step()} on them.
-     * <p>
-     * This will advance pipes with both an active read and write operation to
-     * transferring mode, if they're not already in transferring mode.
-     */
-    void stepPipes() {
-        for (final PipeImpl pipe : pipes) {
-            pipe.step();
-        }
-    }
-
-    /**
-     * Get the list of all pipes managed by this computer part.
-     *
-     * @return the array of pipes.
-     */
-    public Pipe[] getPipes() {
-        return pipes;
-    }
-
-    /**
-     * Receiving pipe for the specified face and port.
-     *
-     * @param face the face to get the port for.
-     * @param port the port for which to get the port.
-     * @return the input port on that port.
-     * @see li.cil.tis3d.api.machine.Casing#getReceivingPipe(Face, Port)
-     */
-    public Pipe getReceivingPipe(final Face face, final Port port) {
-        return pipeOverride[pack(face, port)];
-    }
-
-    /**
-     * Sending pipe for the specified face and port.
-     *
-     * @param face the face to get the port for.
-     * @param port the port for which to get the port.
-     * @return the output port on that port.
-     * @see li.cil.tis3d.api.machine.Casing#getSendingPipe(Face, Port)
-     */
-    public Pipe getSendingPipe(final Face face, final Port port) {
-        return pipeOverride[packMapped(face, port)];
-    }
-
-    // --------------------------------------------------------------------- //
-    // PipeHost
-
-    @Override
-    public Level getPipeHostLevel() {
-        return getBlockEntityLevel();
-    }
-
-    @Override
-    public BlockPos getPipeHostPosition() {
-        return getBlockPos();
-    }
-
-    @Override
-    public void onPipeStateChanged() {
-        setChanged();
-    }
-
-    // --------------------------------------------------------------------- //
-    // BlockEntity
-
-
-    @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains(TAG_IS_UPDATE_TAG)) {
-            loadClient(tag, registries);
-        } else {
-            loadServer(tag, registries);
-        }
-    }
-
-    @Override
-    protected void saveAdditional(final CompoundTag nbt, final HolderLookup.Provider registries) {
-        super.saveAdditional(nbt, registries);
-        saveServer(nbt, registries);
-    }
-
-    @Override
-    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
-        final CompoundTag tag = super.getUpdateTag(registries);
-        tag.putBoolean(TAG_IS_UPDATE_TAG, true);
-        saveClient(tag, registries);
-        return tag;
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    @Override
-    public void onChunkUnloaded() {
-        dispose();
-    }
-
-    // --------------------------------------------------------------------- //
-
-    public void checkNeighbors() {
-        final Level level = getBlockEntityLevel();
-
-        // When a neighbor changed, check all neighbors and register them in
-        // our tile entity.
-        for (final Direction facing : Direction.values()) {
-            final BlockPos neighborPos = getBlockPos().relative(facing);
-            if (LevelUtils.isLoaded(level, neighborPos)) {
-                // If we have a casing, set it as our neighbor.
-                final BlockEntity blockEntity = level.getBlockEntity(neighborPos);
-                if (blockEntity instanceof final ComputerBlockEntity computerPart) {
-                    setNeighbor(Face.fromDirection(facing), computerPart);
-                } else {
-                    setNeighbor(Face.fromDirection(facing), null);
-                }
-            } else {
-                // Neighbor is in unloaded area.
-                setNeighbor(Face.fromDirection(facing), null);
-            }
-        }
-    }
-
-    protected abstract void scheduleScan();
-
-    protected void setNeighbor(final Face face, @Nullable final ComputerBlockEntity neighbor) {
-        // If a neighbor changed, do a rescan in the controller.
-        final ComputerBlockEntity oldNeighbor = neighbors[face.ordinal()];
-        if (neighbor != oldNeighbor) {
-            neighbors[face.ordinal()] = neighbor;
-            scheduleScan();
-        }
-    }
-
-    protected void loadServer(final CompoundTag tag, final HolderLookup.Provider registries) {
-        final ListTag pipesTag = tag.getList(TAG_PIPES, Tag.TAG_COMPOUND);
-        final int pipeCount = Math.min(pipesTag.size(), pipes.length);
-        for (int i = 0; i < pipeCount; i++) {
-            pipes[i].load(pipesTag.getCompound(i));
-        }
-
-        loadCommon(tag, registries);
-    }
-
-    protected void saveServer(final CompoundTag tag, final HolderLookup.Provider registries) {
-        final ListTag pipesTag = new ListTag();
-        for (final PipeImpl pipe : pipes) {
-            final CompoundTag portTag = new CompoundTag();
-            pipe.save(portTag);
-            pipesTag.add(portTag);
-        }
-        tag.put(TAG_PIPES, pipesTag);
-
-        saveCommon(tag, registries);
-    }
-
-    protected void loadClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-        loadCommon(tag, registries);
-    }
-
-    protected void saveClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-        saveCommon(tag, registries);
-    }
-
-    protected void loadCommon(final CompoundTag tag, final HolderLookup.Provider registries) {
-    }
-
-    protected void saveCommon(final CompoundTag tag, final HolderLookup.Provider registries) {
-    }
-
-    boolean hasNeighbor(final Face face) {
-        return neighbors[face.ordinal()] != null;
-    }
-
-    @ApiStatus.Internal
-    protected void dispose() {}
-
-    void rebuildOverrides() {
-        // Reset to initial state before checking for inter-block connections.
-        System.arraycopy(pipes, 0, pipeOverride, 0, pipes.length);
-
-        // Check each open face's neighbors, if they're in front of another
-        // computer block, start connecting the pipe to where that leads us.
-        for (final Face face : Face.VALUES) {
-            if (neighbors[face.ordinal()] != null) {
-                continue;
-            }
-
-            for (final Port port : Port.VALUES) {
-                final Face otherFace = mapFace(face, port);
-                final Port otherPort = mapPort(face, port);
-
-                final ComputerBlockEntity neighbor = neighbors[otherFace.ordinal()];
-                if (neighbor != null) {
-                    final Face neighborFace = otherFace.getOpposite();
-                    final Port neighborPort = flipSide(otherFace, otherPort);
-                    neighbor.computePipeOverrides(neighborFace, neighborPort, this, face, port);
-                }
-            }
-        }
-    }
-
-    // --------------------------------------------------------------------- //
 
     /**
      * Get the the face on the other side of an edge.
@@ -354,6 +143,227 @@ public abstract class ComputerBlockEntity extends BlockEntity implements PipeHos
             return (port == Port.UP || port == Port.DOWN) ? port.getOpposite() : port;
         } else {
             return (port == Port.LEFT || port == Port.RIGHT) ? port.getOpposite() : port;
+        }
+    }
+
+    // --------------------------------------------------------------------- //
+    // PipeHost
+
+    public Level getBlockEntityLevel() {
+        return Objects.requireNonNull(getLevel());
+    }
+
+    /**
+     * Advances the logic of all pipes by calling {@link PipeImpl#step()} on them.
+     * <p>
+     * This will advance pipes with both an active read and write operation to
+     * transferring mode, if they're not already in transferring mode.
+     */
+    void stepPipes() {
+        for (final PipeImpl pipe : pipes) {
+            pipe.step();
+        }
+    }
+
+    /**
+     * Get the list of all pipes managed by this computer part.
+     *
+     * @return the array of pipes.
+     */
+    public Pipe[] getPipes() {
+        return pipes;
+    }
+
+    // --------------------------------------------------------------------- //
+    // BlockEntity
+
+    /**
+     * Receiving pipe for the specified face and port.
+     *
+     * @param face the face to get the port for.
+     * @param port the port for which to get the port.
+     * @return the input port on that port.
+     * @see li.cil.tis3d.api.machine.Casing#getReceivingPipe(Face, Port)
+     */
+    public Pipe getReceivingPipe(final Face face, final Port port) {
+        return pipeOverride[pack(face, port)];
+    }
+
+    /**
+     * Sending pipe for the specified face and port.
+     *
+     * @param face the face to get the port for.
+     * @param port the port for which to get the port.
+     * @return the output port on that port.
+     * @see li.cil.tis3d.api.machine.Casing#getSendingPipe(Face, Port)
+     */
+    public Pipe getSendingPipe(final Face face, final Port port) {
+        return pipeOverride[packMapped(face, port)];
+    }
+
+    @Override
+    public Level getPipeHostLevel() {
+        return getBlockEntityLevel();
+    }
+
+    @Override
+    public BlockPos getPipeHostPosition() {
+        return getBlockPos();
+    }
+
+    @Override
+    public void onPipeStateChanged() {
+        setChanged();
+    }
+
+    // --------------------------------------------------------------------- //
+
+
+    @Override
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+
+        if (input.getBooleanOr(TAG_IS_UPDATE_TAG, false)) {
+            //TODO loadClient(input);
+        } else {
+            loadServer(input);
+        }
+    }
+
+    @Override
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        saveServer(output);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
+        final CompoundTag tag = super.getUpdateTag(registries);
+        tag.putBoolean(TAG_IS_UPDATE_TAG, true);
+        saveClient(tag, registries);
+        return tag;
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        dispose();
+    }
+
+    public void checkNeighbors() {
+        final Level level = getBlockEntityLevel();
+
+        // When a neighbor changed, check all neighbors and register them in
+        // our tile entity.
+        for (final Direction facing : Direction.values()) {
+            final BlockPos neighborPos = getBlockPos().relative(facing);
+            if (LevelUtils.isLoaded(level, neighborPos)) {
+                // If we have a casing, set it as our neighbor.
+                final BlockEntity blockEntity = level.getBlockEntity(neighborPos);
+                if (blockEntity instanceof final ComputerBlockEntity computerPart) {
+                    setNeighbor(Face.fromDirection(facing), computerPart);
+                } else {
+                    setNeighbor(Face.fromDirection(facing), null);
+                }
+            } else {
+                // Neighbor is in unloaded area.
+                setNeighbor(Face.fromDirection(facing), null);
+            }
+        }
+    }
+
+    protected abstract void scheduleScan();
+
+    protected void setNeighbor(final Face face, @Nullable final ComputerBlockEntity neighbor) {
+        // If a neighbor changed, do a rescan in the controller.
+        final ComputerBlockEntity oldNeighbor = neighbors[face.ordinal()];
+        if (neighbor != oldNeighbor) {
+            neighbors[face.ordinal()] = neighbor;
+            scheduleScan();
+        }
+    }
+
+    protected void loadServer(ValueInput input) {
+        var iterator = input.childrenListOrEmpty(TAG_PIPES).iterator();
+        for (PipeImpl pipe : pipes) {
+            if (iterator.hasNext()) {
+                //TODO pipe.load(iterator.next());
+            } else break;
+        }
+
+        //TODO loadCommon(tag, registries);
+    }
+
+    protected void loadServer(final CompoundTag tag, final HolderLookup.Provider registries) {
+        //TODO
+    }
+
+    protected void saveServer(ValueOutput output) {
+        //TODO
+    }
+
+    protected void saveServer(final CompoundTag tag, final HolderLookup.Provider registries) {
+        final ListTag pipesTag = new ListTag();
+        for (final PipeImpl pipe : pipes) {
+            final CompoundTag portTag = new CompoundTag();
+            pipe.save(portTag);
+            pipesTag.add(portTag);
+        }
+        tag.put(TAG_PIPES, pipesTag);
+
+        saveCommon(tag, registries);
+    }
+
+    protected void loadClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+        loadCommon(tag, registries);
+    }
+
+    protected void saveClient(final CompoundTag tag, final HolderLookup.Provider registries) {
+        saveCommon(tag, registries);
+    }
+
+    // --------------------------------------------------------------------- //
+
+    protected void loadCommon(final CompoundTag tag, final HolderLookup.Provider registries) {
+    }
+
+    protected void saveCommon(final CompoundTag tag, final HolderLookup.Provider registries) {
+    }
+
+    boolean hasNeighbor(final Face face) {
+        return neighbors[face.ordinal()] != null;
+    }
+
+    @ApiStatus.Internal
+    protected void dispose() {
+    }
+
+    void rebuildOverrides() {
+        // Reset to initial state before checking for inter-block connections.
+        System.arraycopy(pipes, 0, pipeOverride, 0, pipes.length);
+
+        // Check each open face's neighbors, if they're in front of another
+        // computer block, start connecting the pipe to where that leads us.
+        for (final Face face : Face.VALUES) {
+            if (neighbors[face.ordinal()] != null) {
+                continue;
+            }
+
+            for (final Port port : Port.VALUES) {
+                final Face otherFace = mapFace(face, port);
+                final Port otherPort = mapPort(face, port);
+
+                final ComputerBlockEntity neighbor = neighbors[otherFace.ordinal()];
+                if (neighbor != null) {
+                    final Face neighborFace = otherFace.getOpposite();
+                    final Port neighborPort = flipSide(otherFace, otherPort);
+                    neighbor.computePipeOverrides(neighborFace, neighborPort, this, face, port);
+                }
+            }
         }
     }
 

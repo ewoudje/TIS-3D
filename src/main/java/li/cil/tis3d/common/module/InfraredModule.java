@@ -8,8 +8,6 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModule;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.config.CommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,8 +16,6 @@ import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -28,14 +24,12 @@ public final class InfraredModule extends AbstractModule implements InfraredRece
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private final Deque<Short> receiveQueue = new LinkedList<>();
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT tag names.
     private static final String TAG_RECEIVE_QUEUE = "receiveQueue";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
+    private final Deque<Short> receiveQueue = new LinkedList<>();
     /**
      * The last tick we sent a packet. Used to avoid emitting multiple packets
      * per tick when overclocked, because that could quickly spam a lot of
@@ -93,7 +87,7 @@ public final class InfraredModule extends AbstractModule implements InfraredRece
         super.load(tag);
 
         receiveQueue.clear();
-        final int[] receiveQueueTag = tag.getIntArray(TAG_RECEIVE_QUEUE);
+        final int[] receiveQueueTag = tag.getIntArray(TAG_RECEIVE_QUEUE).orElse(new int[0]);
         for (final int value : receiveQueueTag) {
             receiveQueue.addLast((short) value);
         }

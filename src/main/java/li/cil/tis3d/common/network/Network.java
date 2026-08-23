@@ -36,6 +36,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -65,13 +66,35 @@ import java.util.Stack;
  * effect emission and module packets where possible.
  */
 public final class Network {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     public static final int RANGE_HIGH = 48;
     public static final int RANGE_MEDIUM = 32;
     public static final int RANGE_LOW = 16;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     // --------------------------------------------------------------------- //
+    private static final int TICK_TIME = 50;
+
+
+    // --------------------------------------------------------------------- //
+    private static final Set<Position> particleQueue = new HashSet<>();
+    private static final Stack<CasingSendQueue> queuePool = new Stack<>();
+    private static final Map<CasingBlockEntity, CasingSendQueue> clientQueues = new HashMap<>();
+    private static final Map<CasingBlockEntity, CasingSendQueue> serverQueues = new HashMap<>();
+    private static long lastParticlesSent = 0;
+
+    // --------------------------------------------------------------------- //
+    private static int particlesSent = 0;
+    private static int particleSendInterval = TICK_TIME;
+    private static int packetsSentServer = 0;
+    private static int packetsSentClient = 0;
+
+    // --------------------------------------------------------------------- //
+    // Particle message queueing
+    private static int throttleServer = 0;
+    private static int throttleClient = 0;
+
+    private Network() {
+    }
 
     public static void register(RegisterPayloadHandlersEvent e) {
         final PayloadRegistrar registrar = e.registrar("1");
@@ -99,9 +122,6 @@ public final class Network {
         });
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post _e) -> flushCasingQueues(Side.CLIENT));
     }
-
-
-    // --------------------------------------------------------------------- //
 
     public static void sendToPlayer(final ServerPlayer player, final AbstractMessage message) {
         PacketDistributor.sendToPlayer(player, message);
@@ -165,9 +185,10 @@ public final class Network {
     }
 
     // --------------------------------------------------------------------- //
+    // Module data metering
 
     public static void sendToServer(final AbstractMessage message) {
-        PacketDistributor.sendToServer(message);
+        ClientPacketDistributor.sendToServer(message);
     }
 
     public static void sendModuleData(final CasingBlockEntity casing, final Face face, final CompoundTag data, final byte type) {
@@ -182,7 +203,7 @@ public final class Network {
         final BlockPos position = BlockPos.containing(x, y, z);
         if (LevelUtils.isLoaded(level, position)) {
             final BlockState state = level.getBlockState(position);
-            if (state.isSolidRender(level, position)) {
+            if (state.isSolidRender()) {
                 // Skip particle emission when inside a block where they aren't visible anyway.
                 return;
             }
@@ -190,15 +211,6 @@ public final class Network {
 
         queueParticleEffect(level, (float) x, (float) y, (float) z);
     }
-
-    // --------------------------------------------------------------------- //
-    // Particle message queueing
-
-    private static final int TICK_TIME = 50;
-    private static final Set<Position> particleQueue = new HashSet<>();
-    private static long lastParticlesSent = 0;
-    private static int particlesSent = 0;
-    private static int particleSendInterval = TICK_TIME;
 
     private static void queueParticleEffect(final Level level, final float x, final float y, final float z) {
         final Position position = new Position(level, x, y, z);
@@ -229,54 +241,6 @@ public final class Network {
         return new CustomPacketPayload.Type<>(API.resource(name));
     }
 
-    /**
-     * Track dimensional position of particle emission for culling duplicates
-     * when currently throttling.
-     */
-    private record Position(Level level, float x, float y, float z) {
-        private void sendMessage() {
-            final RedstoneParticleEffectMessage message = new RedstoneParticleEffectMessage(x, y, z);
-            if (Network.sendToNearbyPlayers(level, new Vec3(x, y, z), RANGE_LOW, message)) {
-                particlesSent++;
-            }
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-
-            final Position that = (Position) obj;
-            return Objects.equals(level.dimension(), that.level.dimension()) && Float.compare(that.x, x) == 0 && Float.compare(that.y, y) == 0 && Float.compare(that.z, z) == 0;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = level.dimension().hashCode();
-            result = 31 * result + (x != 0.0f ? Float.floatToIntBits(x) : 0);
-            result = 31 * result + (y != 0.0f ? Float.floatToIntBits(y) : 0);
-            result = 31 * result + (z != 0.0f ? Float.floatToIntBits(z) : 0);
-            return result;
-        }
-    }
-
-    // --------------------------------------------------------------------- //
-    // Module data metering
-
-    private static int packetsSentServer = 0;
-    private static int packetsSentClient = 0;
-    private static int throttleServer = 0;
-    private static int throttleClient = 0;
-
-    private enum Side {
-        CLIENT, DEDICATED_SERVER
-    }
-
     private static int getPacketsSent(final Side side) {
         return side == Side.CLIENT ? packetsSentClient : packetsSentServer;
     }
@@ -301,6 +265,9 @@ public final class Network {
         return side == Side.CLIENT ? throttleClient : throttleServer;
     }
 
+    // --------------------------------------------------------------------- //
+    // Module data queueing
+
     private static void setThrottle(final Side side, final int value) {
         if (side == Side.CLIENT) {
             throttleClient = value;
@@ -316,13 +283,6 @@ public final class Network {
             throttleServer--;
         }
     }
-
-    // --------------------------------------------------------------------- //
-    // Module data queueing
-
-    private static final Stack<CasingSendQueue> queuePool = new Stack<>();
-    private static final Map<CasingBlockEntity, CasingSendQueue> clientQueues = new HashMap<>();
-    private static final Map<CasingBlockEntity, CasingSendQueue> serverQueues = new HashMap<>();
 
     private static Map<CasingBlockEntity, CasingSendQueue> getQueues(final Side side) {
         if (side == Side.CLIENT) {
@@ -378,6 +338,46 @@ public final class Network {
             queuePool.addAll(queues.values());
         }
         queues.clear();
+    }
+
+    private enum Side {
+        CLIENT, DEDICATED_SERVER
+    }
+
+    /**
+     * Track dimensional position of particle emission for culling duplicates
+     * when currently throttling.
+     */
+    private record Position(Level level, float x, float y, float z) {
+        private void sendMessage() {
+            final RedstoneParticleEffectMessage message = new RedstoneParticleEffectMessage(x, y, z);
+            if (Network.sendToNearbyPlayers(level, new Vec3(x, y, z), RANGE_LOW, message)) {
+                particlesSent++;
+            }
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+
+            final Position that = (Position) obj;
+            return Objects.equals(level.dimension(), that.level.dimension()) && Float.compare(that.x, x) == 0 && Float.compare(that.y, y) == 0 && Float.compare(that.z, z) == 0;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = level.dimension().hashCode();
+            result = 31 * result + (x != 0.0f ? Float.floatToIntBits(x) : 0);
+            result = 31 * result + (y != 0.0f ? Float.floatToIntBits(y) : 0);
+            result = 31 * result + (z != 0.0f ? Float.floatToIntBits(z) : 0);
+            return result;
+        }
     }
 
     /**
@@ -437,6 +437,8 @@ public final class Network {
             }
         }
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Collects messages for a single module.
@@ -567,10 +569,5 @@ public final class Network {
                 }
             }
         }
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private Network() {
     }
 }

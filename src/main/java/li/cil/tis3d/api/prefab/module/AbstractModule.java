@@ -103,7 +103,7 @@ public abstract class AbstractModule implements Module {
 
         // Otherwise check if the neighboring block blocks visibility to our face.
         final BlockState neighborState = level.getBlockState(neighborPos);
-        return !neighborState.isSolidRender(level, neighborPos);
+        return !neighborState.isSolidRender();
     }
 
     // --------------------------------------------------------------------- //

@@ -2,6 +2,6 @@
 @MethodsReturnNonnullByDefault
 package li.cil.tis3d.client.renderer.font;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
+import com.mojang.logging.annotations.MethodsReturnNonnullByDefault;
 
 import javax.annotation.ParametersAreNonnullByDefault;

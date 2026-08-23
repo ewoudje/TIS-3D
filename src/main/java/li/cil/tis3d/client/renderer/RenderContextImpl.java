@@ -2,18 +2,17 @@ package li.cil.tis3d.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.ryanhcode.sable.companion.SableCompanion;
 import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.util.RenderContext;
 import li.cil.tis3d.util.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
 import org.joml.Vector3f;
 
 public final class RenderContextImpl implements RenderContext {
@@ -45,6 +44,10 @@ public final class RenderContextImpl implements RenderContext {
 
     // --------------------------------------------------------------------- //
 
+    private static TextureAtlasSprite getSprite(final Identifier location) {
+        return Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS).getSprite(location);
+    }
+
     @Override
     public BlockEntityRenderDispatcher getDispatcher() {
         return dispatcher;
@@ -67,15 +70,8 @@ public final class RenderContextImpl implements RenderContext {
 
     @Override
     public boolean closeEnoughForDetails(final BlockPos position) {
-        return SableCompanion.INSTANCE.distanceSquaredWithSubLevels(
-            dispatcher.level,
-            dispatcher.camera.getPosition().x,
-            dispatcher.camera.getPosition().y,
-            dispatcher.camera.getPosition().z,
-            position.getX() + 0.5,
-            position.getY() + 0.5,
-            position.getZ() + 0.5
-        ) < DETAIL_RENDER_RANGE * DETAIL_RENDER_RANGE;
+        //TODO
+        return 0 < DETAIL_RENDER_RANGE * DETAIL_RENDER_RANGE;
     }
 
     @Override
@@ -84,28 +80,28 @@ public final class RenderContextImpl implements RenderContext {
     }
 
     @Override
-    public void drawAtlasQuadLit(final ResourceLocation location) {
-        final VertexConsumer builder = buffer.getBuffer(RenderType.translucent());
+    public void drawAtlasQuadLit(final Identifier location) {
+        final VertexConsumer builder = buffer.getBuffer(RenderTypes.entityTranslucent(location));
         drawAtlasQuad(builder, getSprite(location), 0, 0, 1, 1, 0, 0, 1, 1, Color.WHITE);
     }
 
     @Override
-    public void drawAtlasQuadUnlit(final ResourceLocation location) {
+    public void drawAtlasQuadUnlit(final Identifier location) {
         drawAtlasQuadUnlit(location, 0, 0, 1, 1, 0, 0, 1, 1, Color.WHITE);
     }
 
     @Override
-    public void drawAtlasQuadUnlit(final ResourceLocation location,
+    public void drawAtlasQuadUnlit(final Identifier location,
                                    final float x, final float y, final float width, final float height,
                                    final float u0, final float v0, final float u1, final float v1,
                                    final int argb) {
-        final VertexConsumer builder = buffer.getBuffer(ModRenderType.unlitAtlasTexture());
+        final VertexConsumer builder = buffer.getBuffer(ModRenderTypes.unlitAtlasTexture());
         drawAtlasQuad(builder, getSprite(location), x, y, width, height, u0, v0, u1, v1, argb);
     }
 
     @Override
     public void drawQuadUnlit(final float x, final float y, final float width, final float height, final int argb) {
-        final VertexConsumer builder = buffer.getBuffer(ModRenderType.unlit());
+        final VertexConsumer builder = buffer.getBuffer(ModRenderTypes.unlit());
         drawQuad(builder, x, y, width, height, 0, 0, 1, 1, argb);
     }
 
@@ -113,6 +109,8 @@ public final class RenderContextImpl implements RenderContext {
     public void drawQuad(final VertexConsumer builder, final float x, final float y, final float width, final float height) {
         drawQuad(builder, x, y, width, height, Color.WHITE);
     }
+
+    // --------------------------------------------------------------------- //
 
     @Override
     public void drawQuad(final VertexConsumer builder,
@@ -149,11 +147,5 @@ public final class RenderContextImpl implements RenderContext {
             .setOverlay(overlay)
             .setLight(light)
             .setNormal(pose, up.x(), up.y(), up.z());
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private static TextureAtlasSprite getSprite(final ResourceLocation location) {
-        return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(location);
     }
 }

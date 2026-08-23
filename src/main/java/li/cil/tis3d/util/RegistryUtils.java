@@ -16,6 +16,13 @@ public abstract class RegistryUtils {
     private static RegistryUtils.Phase phase;
     private static String modId;
 
+    static {
+        phase = Phase.PRE_INIT;
+    }
+
+    private RegistryUtils() {
+    }
+
     public static <T> RegistryBuilder<T> builder(ResourceKey<Registry<T>> registryKey) {
         if (phase != RegistryUtils.Phase.INIT) {
             throw new IllegalStateException();
@@ -35,7 +42,7 @@ public abstract class RegistryUtils {
     }
 
     public static <T> Registry<T> get(ResourceKey<Registry<T>> registryKey) {
-        return (Registry) BuiltInRegistries.REGISTRY.get(registryKey.location());
+        return (Registry) BuiltInRegistries.REGISTRY.get(registryKey.identifier()).orElseThrow().value();
     }
 
     public static void begin(String modId) {
@@ -55,13 +62,6 @@ public abstract class RegistryUtils {
             BUILDERS.forEach(e::create);
             BUILDERS.clear();
         });
-    }
-
-    private RegistryUtils() {
-    }
-
-    static {
-        phase = Phase.PRE_INIT;
     }
 
     private enum Phase {

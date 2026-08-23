@@ -60,7 +60,7 @@ public final class TIS3DMod {
         RedstoneInputProviders.initialize(bus);
         ModCreativeTabs.initialize(bus);
 
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             Manuals.initialize(bus);
             ClientBootstrap.setup(bus);
         }

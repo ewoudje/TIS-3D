@@ -18,6 +18,14 @@ public final class BakTargetInterface extends AbstractTargetInterface {
     // --------------------------------------------------------------------- //
     // TargetInterface
 
+    private static IllegalArgumentException throwOnWrite() {
+        throw new IllegalStateException("BAK cannot be written to directly.");
+    }
+
+    private static IllegalArgumentException throwOnRead() {
+        throw new IllegalStateException("BAK cannot be read from directly.");
+    }
+
     @Override
     public boolean beginWrite(final short value) {
         throw throwOnWrite();
@@ -46,14 +54,6 @@ public final class BakTargetInterface extends AbstractTargetInterface {
     @Override
     public short read() {
         throw throwOnRead();
-    }
-
-    private static IllegalArgumentException throwOnWrite() {
-        throw new IllegalStateException("BAK cannot be written to directly.");
-    }
-
-    private static IllegalArgumentException throwOnRead() {
-        throw new IllegalStateException("BAK cannot be read from directly.");
     }
 
     // --------------------------------------------------------------------- //

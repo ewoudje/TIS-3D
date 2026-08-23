@@ -1,8 +1,8 @@
 package li.cil.tis3d.api.module.traits;
 
 import li.cil.tis3d.util.ClientSided;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -10,8 +10,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.model.data.ModelData;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -91,6 +90,6 @@ public interface ModuleWithBakedModel {
      * @param data   the model data for the underlying model.
      * @return the render layers needed by the underlying model.
      */
-    @OnlyIn(Dist.CLIENT)
-    ChunkRenderTypeSet getRenderTypes(final RandomSource random, final ModelData data);
+    //TODO @OnlyIn(Dist.CLIENT)
+    //TODO ChunkRenderTypeSet getRenderTypes(final RandomSource random, final ModelData data);
 }

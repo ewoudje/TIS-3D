@@ -8,6 +8,7 @@ import li.cil.tis3d.common.module.execution.compiler.ParseException;
 import li.cil.tis3d.common.module.execution.instruction.Instruction;
 import li.cil.tis3d.util.EnumUtils;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,39 +23,6 @@ public final class MachineState {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    /**
-     * Program counter, i.e. the index of the next operation to execute.
-     */
-    public int pc = 0;
-
-    /**
-     * Accumulator register.
-     */
-    public short acc = 0;
-
-    /**
-     * Backup register.
-     */
-    public short bak = 0;
-
-    /**
-     * The port last read from.
-     */
-    public Optional<Port> last = Optional.empty();
-
-    /**
-     * Lines of original code this state was compiled from.
-     */
-    public String[] code;
-
-    /**
-     * State of program counter after last call to {@link #finishCycle()}.
-     */
-    private int pcPrev;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT tag names.
     private static final String TAG_CODE = "code";
     private static final String TAG_PC = "pc";
@@ -63,20 +31,44 @@ public final class MachineState {
     private static final String TAG_LAST = "last";
     private static final String TAG_PC_PREV = "pcPrev";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
     /**
      * List of instructions (the program) stored in the machine.
      */
     public final List<Instruction> instructions = new ArrayList<>(CommonConfig.maxLinesPerProgram);
-
     /**
      * List of labels and associated addresses.
      */
     public final HashMap<String, Integer> labels = new HashMap<>(CommonConfig.maxLinesPerProgram);
-
     /**
      * Instruction address to line number mapping.
      */
     public final HashMap<Integer, Integer> lineNumbers = new HashMap<>(CommonConfig.maxLinesPerProgram);
+    /**
+     * Program counter, i.e. the index of the next operation to execute.
+     */
+    public int pc = 0;
+    /**
+     * Accumulator register.
+     */
+    public short acc = 0;
+    /**
+     * Backup register.
+     */
+    public short bak = 0;
+    /**
+     * The port last read from.
+     */
+    public Optional<Port> last = Optional.empty();
+    /**
+     * Lines of original code this state was compiled from.
+     */
+    public String[] code;
+    /**
+     * State of program counter after last call to {@link #finishCycle()}.
+     */
+    private int pcPrev;
 
     // --------------------------------------------------------------------- //
 
@@ -126,10 +118,11 @@ public final class MachineState {
 
     // --------------------------------------------------------------------- //
 
-    public void load(final CompoundTag tag) {
-        if (tag.contains(TAG_CODE)) {
+    public void load(final ValueInput input) {
+        var code = input.getString(TAG_CODE);
+        if (code.isPresent()) {
             try {
-                Compiler.compile(Arrays.asList(Constants.PATTERN_LINES.split(tag.getString(TAG_CODE))), this);
+                Compiler.compile(Arrays.asList(Constants.PATTERN_LINES.split(code.get())), this);
             } catch (final ParseException ignored) {
                 // Silent because this is also used to send code to the
                 // clients to visualize errors, and code is also saved
@@ -137,15 +130,11 @@ public final class MachineState {
             }
         }
 
-        pc = tag.getInt(TAG_PC);
-        acc = tag.getShort(TAG_ACC);
-        bak = tag.getShort(TAG_BAK);
-        if (tag.contains(TAG_LAST)) {
-            last = Optional.of(EnumUtils.load(Port.class, TAG_LAST, tag));
-        } else {
-            last = Optional.empty();
-        }
-        pcPrev = tag.getInt(TAG_PC_PREV);
+        pc = input.getIntOr(TAG_PC, 0);
+        acc = (short) input.getShortOr(TAG_ACC, (short) 0);
+        bak = (short) input.getShortOr(TAG_BAK, (short) 0);
+        last = EnumUtils.load(Port.class, TAG_LAST, input);
+        pcPrev = input.getIntOr(TAG_PC_PREV, 0);
     }
 
     public void save(final CompoundTag tag) {

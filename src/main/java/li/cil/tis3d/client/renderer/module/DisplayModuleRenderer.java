@@ -7,14 +7,13 @@ import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.ModRenderType;
+import li.cil.tis3d.client.renderer.ModRenderTypes;
 import li.cil.tis3d.common.module.DisplayModule;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,10 +40,11 @@ public class DisplayModuleRenderer extends AbstractModuleWithRotationRenderer<Di
     private RenderData getRenderData(DisplayModule module) {
         return RENDER_DATA.computeIfAbsent(module, m -> {
             final TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-            final DynamicTexture texture = new DynamicTexture(DisplayModule.RESOLUTION, DisplayModule.RESOLUTION, false);
-            final ResourceLocation textureId = API.resource("dynamic/display_module_" + (++nextTextureId));
+            final String name = "dynamic/display_module_" + (++nextTextureId);
+            final DynamicTexture texture = new DynamicTexture(name, DisplayModule.RESOLUTION, DisplayModule.RESOLUTION, false);
+            final Identifier textureId = API.resource(name);
             textureManager.register(textureId, texture);
-            return new RenderData(texture, textureId, ModRenderType.unlitTexture(textureId));
+            return new RenderData(texture, textureId, ModRenderTypes.unlitTexture(textureId));
         });
     }
 
@@ -73,7 +73,7 @@ public class DisplayModuleRenderer extends AbstractModuleWithRotationRenderer<Di
         matrixStack.popPose();
     }
 
-    private record RenderData(DynamicTexture texture, ResourceLocation textureId, RenderType renderType) {
+    private record RenderData(DynamicTexture texture, Identifier textureId, RenderType renderType) {
         private void write(int[] image) {
             final NativeImage nativeImage = texture.getPixels();
             if (nativeImage == null) {
@@ -83,12 +83,7 @@ public class DisplayModuleRenderer extends AbstractModuleWithRotationRenderer<Di
             int ip = 0;
             for (int iy = 0; iy < DisplayModule.RESOLUTION; iy++) {
                 for (int ix = 0; ix < DisplayModule.RESOLUTION; ix++, ip++) {
-                    final int argb = image[ip];
-                    final int a = FastColor.ARGB32.alpha(argb);
-                    final int b = FastColor.ARGB32.blue(argb);
-                    final int g = FastColor.ARGB32.green(argb);
-                    final int r = FastColor.ARGB32.red(argb);
-                    nativeImage.setPixelRGBA(ix, iy, FastColor.ABGR32.color(a, b, g, r));
+                    nativeImage.setPixel(ix, iy, image[ip]);
                 }
             }
 

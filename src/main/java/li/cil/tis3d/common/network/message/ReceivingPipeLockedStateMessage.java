@@ -66,8 +66,8 @@ public final class ReceivingPipeLockedStateMessage extends AbstractMessageWithPo
         super.toBytes(buffer);
 
         final byte compressed = (byte) ((face.ordinal() << 3) |
-                                        (port.ordinal() << 1) |
-                                        (isLocked ? 1 : 0));
+            (port.ordinal() << 1) |
+            (isLocked ? 1 : 0));
         buffer.writeByte(compressed);
     }
 

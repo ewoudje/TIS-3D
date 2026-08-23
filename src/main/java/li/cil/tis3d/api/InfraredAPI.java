@@ -13,6 +13,11 @@ import javax.annotation.Nullable;
  * depend on TIS-3D or you must not make calls to this before the init phase.
  */
 public final class InfraredAPI {
+    private InfraredAPI() {
+    }
+
+    // --------------------------------------------------------------------- //
+
     /**
      * Emit a new infrared packet with the specified value.
      *
@@ -28,10 +33,5 @@ public final class InfraredAPI {
             return API.infraredAPI.sendPacket(level, position, direction, value);
         }
         return null;
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private InfraredAPI() {
     }
 }

@@ -8,8 +8,8 @@ import li.cil.tis3d.api.prefab.module.AbstractModule;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.util.BlockStateUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,11 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.neoforged.neoforge.model.data.ModelData;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -43,19 +39,16 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private BlockState facadeState;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // Error message when trying to configure with an incompatible block.
     public static final Component MESSAGE_FACADE_INVALID_TARGET = Component.translatable("tis3d.facade.invalid_target");
 
+    // --------------------------------------------------------------------- //
+    // Computed data
     // Data packet types.
     private static final byte DATA_TYPE_FULL = 0;
-
     // NBT tag names.
     private static final String TAG_STATE = "state";
+    private BlockState facadeState;
 
     // --------------------------------------------------------------------- //
 
@@ -107,7 +100,7 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        facadeState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound(TAG_STATE));
+        facadeState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK, tag.getCompoundOrEmpty(TAG_STATE));
         if (facadeState == Blocks.AIR.defaultBlockState()) {
             facadeState = null;
         }
@@ -158,27 +151,28 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     @Override
     public ModelData getModelData(final BlockAndTintGetter level, final BlockPos pos, final BlockState state, final ModelData data) {
         final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
-        return model.getModelData(level, pos, facadeState, data);
+        return data; //TODO model.getModelData(level, pos, facadeState, data);
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable final BlockState state, @Nullable final Direction face, final RandomSource random, final ModelData data, final @Nullable RenderType renderType) {
         final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
-        return model.getQuads(facadeState, face, random, data, renderType);
+        return List.of(); //TODO model.getQuads(facadeState, face, random, data, renderType);
     }
 
-    @Override
-    public ChunkRenderTypeSet getRenderTypes(final RandomSource random, final ModelData data) {
-        final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
-        return model.getRenderTypes(facadeState, random, data);
-    }
+    // @Override
+    // public ChunkRenderTypeSet getRenderTypes(final RandomSource random, final ModelData data) {
+    //     final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
+    //     return model.getRenderTypes(facadeState, random, data);
+    //}
 
     // --------------------------------------------------------------------- //
 
     private boolean trySetFacadeState(final BlockState state) {
-        if (state.getRenderShape() != RenderShape.MODEL ||
-            !state.isSolidRender(getCasing().getCasingLevel(), getCasing().getPosition()) ||
-            state.getBlock() instanceof EntityBlock) {
+        if (state.getRenderShape() != RenderShape.MODEL
+            || !state.isSolidRender()
+            || state.getBlock() instanceof EntityBlock
+        ) {
             return false;
         }
 

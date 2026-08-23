@@ -16,11 +16,10 @@ import li.cil.tis3d.client.renderer.module.TextureModuleRenderer;
 import li.cil.tis3d.client.renderer.module.TimerModuleRenderer;
 import li.cil.tis3d.common.module.AudioModule;
 import li.cil.tis3d.common.module.InfraredModule;
-import li.cil.tis3d.common.module.KeypadModule;
 import li.cil.tis3d.common.module.RandomModule;
 import li.cil.tis3d.common.module.SerialPortModule;
 import li.cil.tis3d.util.RegistryUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -51,7 +50,7 @@ public class ModuleRenderers {
         MODULE_RENDERERS.register(eventBus);
     }
 
-    private static void registerTexture(String name, ResourceLocation texture, Class<? extends Module> moduleClass) {
+    private static void registerTexture(String name, Identifier texture, Class<? extends Module> moduleClass) {
         MODULE_RENDERERS.register(name, () -> new TextureModuleRenderer<>(texture, moduleClass));
     }
 }

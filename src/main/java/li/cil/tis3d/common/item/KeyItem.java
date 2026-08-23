@@ -8,8 +8,9 @@ import net.minecraft.world.item.context.UseOnContext;
  * Base item for all keys.
  */
 public final class KeyItem extends ModItem {
-    public KeyItem() {
-        super(createProperties().stacksTo(1));
+
+    public KeyItem(Properties properties) {
+        super(properties.stacksTo(1));
     }
 
     // --------------------------------------------------------------------- //

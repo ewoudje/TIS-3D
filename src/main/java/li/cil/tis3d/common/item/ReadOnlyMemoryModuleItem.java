@@ -6,7 +6,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -21,39 +20,12 @@ public final class ReadOnlyMemoryModuleItem extends ModuleItem {
     private static final String TAG_DATA = "data";
     private static final byte[] EMPTY_DATA = new byte[0];
 
-    public ReadOnlyMemoryModuleItem() {
-        super(createProperties().stacksTo(1));
+    public ReadOnlyMemoryModuleItem(Properties properties) {
+        super(properties.stacksTo(1));
     }
 
     // --------------------------------------------------------------------- //
     // Item
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(final Level level, final Player player, final InteractionHand hand) {
-        if (!level.isClientSide() && player instanceof final ServerPlayer serverPlayer) {
-            serverPlayer.openMenu(new MenuProvider() {
-                @Override
-                public Component getDisplayName() {
-                    return Component.empty();
-                }
-
-                @Override
-                public AbstractContainerMenu createMenu(final int id, final Inventory playerInventory, final Player player) {
-                    return new ReadOnlyMemoryModuleContainer(id, player, hand);
-                }
-            }, buffer -> buffer.writeEnum(hand));
-        }
-
-        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
-    }
-
-    @Override
-    public InteractionResult useOn(final UseOnContext context) {
-        return CasingBlock.useIfCasing(context).orElseGet(() -> super.useOn(context));
-    }
-
-    // --------------------------------------------------------------------- //
-
 
     /**
      * Load ROM data from the specified item stack.
@@ -73,5 +45,31 @@ public final class ReadOnlyMemoryModuleItem extends ModuleItem {
      */
     public static void saveToStack(final ItemStack stack, final byte[] data) {
         stack.set(DataComponentTypes.ROM_DATA_COMPONENT, ByteBuffer.wrap(data));
+    }
+
+    // --------------------------------------------------------------------- //
+
+    @Override
+    public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
+        if (!level.isClientSide() && player instanceof final ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(new MenuProvider() {
+                @Override
+                public Component getDisplayName() {
+                    return Component.empty();
+                }
+
+                @Override
+                public AbstractContainerMenu createMenu(final int id, final Inventory playerInventory, final Player player) {
+                    return new ReadOnlyMemoryModuleContainer(id, player, hand);
+                }
+            }, buffer -> buffer.writeEnum(hand));
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public InteractionResult useOn(final UseOnContext context) {
+        return CasingBlock.useIfCasing(context).orElseGet(() -> super.useOn(context));
     }
 }

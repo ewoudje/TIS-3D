@@ -65,6 +65,67 @@ import java.util.regex.Pattern;
  * Generates exceptions with line and column location if invalid code is encountered.
  */
 public final class Compiler {
+    private static final Pattern PATTERN_COMMENT = Pattern.compile("#.*$");
+
+    // --------------------------------------------------------------------- //
+    private static final Pattern PATTERN_DEFINE = Pattern.compile("#DEFINE\\s+(?<key>\\S+)\\s*(?<value>\\S+)\\s*$");
+    private static final Pattern PATTERN_UNDEFINE = Pattern.compile("#UNDEF\\s+(?<key>\\S+)\\s*$");
+    private static final Pattern PATTERN_LINE = Pattern.compile("^\\s*(?:(?<label>[^:\\s]+)\\s*:\\s*)?(?:(?<name>\\S+)\\s*(?<arg1>[^,\\s]+)?\\s*,?\\s*(?<arg2>[^,\\s]+)?\\s*(?<excess>.+)?)?\\s*$");
+    private static final String INSTRUCTION_NO_NAME = "NOP";
+
+    // --------------------------------------------------------------------- //
+    private static final Instruction INSTRUCTION_NOP = new AddInstruction(Target.NIL);
+    private static final InstructionEmitter EMITTER_MISSING = new MissingInstructionEmitter();
+    private static final Map<String, InstructionEmitter> EMITTER_MAP;
+
+    static {
+        final ImmutableMap.Builder<String, InstructionEmitter> builder = ImmutableMap.builder();
+
+        // Special handling: actually emits an `ADD NIL`.
+        builder.put(INSTRUCTION_NO_NAME, new UnaryInstructionEmitter(() -> INSTRUCTION_NOP));
+        // Special handling: does super-special magic.
+        builder.put(HaltAndCatchFireInstruction.NAME, new UnaryInstructionEmitter(() -> HaltAndCatchFireInstruction.INSTANCE));
+
+        // Jumps.
+        builder.put(JumpInstruction.NAME, new LabelInstructionEmitter(JumpInstruction::new));
+        builder.put(JumpEqualZeroInstruction.NAME, new LabelInstructionEmitter(JumpEqualZeroInstruction::new));
+        builder.put(JumpGreaterThanZeroInstruction.NAME, new LabelInstructionEmitter(JumpGreaterThanZeroInstruction::new));
+        builder.put(JumpLessThanZeroInstruction.NAME, new LabelInstructionEmitter(JumpLessThanZeroInstruction::new));
+        builder.put(JumpNotZeroInstruction.NAME, new LabelInstructionEmitter(JumpNotZeroInstruction::new));
+        builder.put(JumpRelativeInstruction.NAME, new TargetOrImmediateInstructionEmitter(JumpRelativeInstruction::new, JumpRelativeImmediateInstruction::new));
+        builder.put(JumpAbsoluteInstruction.NAME, new TargetOrImmediateInstructionEmitter(JumpAbsoluteInstruction::new, JumpAbsoluteImmediateInstruction::new));
+
+        // Data transfer.
+        builder.put(MoveInstruction.NAME, new MoveInstructionEmitter());
+        builder.put(SaveInstruction.NAME, new UnaryInstructionEmitter(() -> SaveInstruction.INSTANCE));
+        builder.put(SwapInstruction.NAME, new UnaryInstructionEmitter(() -> SwapInstruction.INSTANCE));
+
+        // Arithmetic operations.
+        builder.put(NegateInstruction.NAME, new UnaryInstructionEmitter(() -> NegateInstruction.INSTANCE));
+        builder.put(AddInstruction.NAME, new TargetOrImmediateInstructionEmitter(AddInstruction::new, AddImmediateInstruction::new));
+        builder.put(SubtractInstruction.NAME, new TargetOrImmediateInstructionEmitter(SubtractInstruction::new, SubtractImmediateInstruction::new));
+        builder.put(MulInstruction.NAME, new TargetOrImmediateInstructionEmitter(MulInstruction::new, MulImmediateInstruction::new));
+        builder.put(DivInstruction.NAME, new TargetOrImmediateInstructionEmitter(DivInstruction::new, DivImmediateInstruction::new));
+        builder.put(ModuloInstruction.NAME, new TargetOrImmediateInstructionEmitter(ModuloInstruction::new, ModuloImmediateInstruction::new));
+
+        // Bitwise operations.
+        builder.put(BitwiseNotInstruction.NAME, new UnaryInstructionEmitter(() -> BitwiseNotInstruction.INSTANCE));
+        builder.put(BitwiseAndInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseAndInstruction::new, BitwiseAndImmediateInstruction::new));
+        builder.put(BitwiseOrInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseOrInstruction::new, BitwiseOrImmediateInstruction::new));
+        builder.put(BitwiseXorInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseXorInstruction::new, BitwiseXorImmediateInstruction::new));
+        builder.put(BitwiseShiftLeftInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseShiftLeftInstruction::new, BitwiseShiftLeftImmediateInstruction::new));
+        builder.put(BitwiseShiftRightInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseShiftRightInstruction::new, BitwiseShiftRightImmediateInstruction::new));
+
+        // Operations on LAST.
+        builder.put(LastRotateLeftInstruction.NAME, new UnaryInstructionEmitter(() -> LastRotateLeftInstruction.INSTANCE));
+        builder.put(LastRotateRightInstruction.NAME, new UnaryInstructionEmitter(() -> LastRotateRightInstruction.INSTANCE));
+
+        EMITTER_MAP = builder.build();
+    }
+
+    private Compiler() {
+    }
+
     /**
      * Parse the specified piece of assembly code into the specified machine state.
      * <p>
@@ -134,8 +195,6 @@ public final class Compiler {
             throw e;
         }
     }
-
-    // --------------------------------------------------------------------- //
 
     /**
      * Parse a define from the specified match and put it in the map of defines.
@@ -227,64 +286,5 @@ public final class Compiler {
 
         // Store the instruction in the machine state (after just to skip the -1 :P).
         state.instructions.add(instruction);
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private static final Pattern PATTERN_COMMENT = Pattern.compile("#.*$");
-    private static final Pattern PATTERN_DEFINE = Pattern.compile("#DEFINE\\s+(?<key>\\S+)\\s*(?<value>\\S+)\\s*$");
-    private static final Pattern PATTERN_UNDEFINE = Pattern.compile("#UNDEF\\s+(?<key>\\S+)\\s*$");
-    private static final Pattern PATTERN_LINE = Pattern.compile("^\\s*(?:(?<label>[^:\\s]+)\\s*:\\s*)?(?:(?<name>\\S+)\\s*(?<arg1>[^,\\s]+)?\\s*,?\\s*(?<arg2>[^,\\s]+)?\\s*(?<excess>.+)?)?\\s*$");
-    private static final String INSTRUCTION_NO_NAME = "NOP";
-    private static final Instruction INSTRUCTION_NOP = new AddInstruction(Target.NIL);
-    private static final InstructionEmitter EMITTER_MISSING = new MissingInstructionEmitter();
-    private static final Map<String, InstructionEmitter> EMITTER_MAP;
-
-    static {
-        final ImmutableMap.Builder<String, InstructionEmitter> builder = ImmutableMap.builder();
-
-        // Special handling: actually emits an `ADD NIL`.
-        builder.put(INSTRUCTION_NO_NAME, new UnaryInstructionEmitter(() -> INSTRUCTION_NOP));
-        // Special handling: does super-special magic.
-        builder.put(HaltAndCatchFireInstruction.NAME, new UnaryInstructionEmitter(() -> HaltAndCatchFireInstruction.INSTANCE));
-
-        // Jumps.
-        builder.put(JumpInstruction.NAME, new LabelInstructionEmitter(JumpInstruction::new));
-        builder.put(JumpEqualZeroInstruction.NAME, new LabelInstructionEmitter(JumpEqualZeroInstruction::new));
-        builder.put(JumpGreaterThanZeroInstruction.NAME, new LabelInstructionEmitter(JumpGreaterThanZeroInstruction::new));
-        builder.put(JumpLessThanZeroInstruction.NAME, new LabelInstructionEmitter(JumpLessThanZeroInstruction::new));
-        builder.put(JumpNotZeroInstruction.NAME, new LabelInstructionEmitter(JumpNotZeroInstruction::new));
-        builder.put(JumpRelativeInstruction.NAME, new TargetOrImmediateInstructionEmitter(JumpRelativeInstruction::new, JumpRelativeImmediateInstruction::new));
-        builder.put(JumpAbsoluteInstruction.NAME, new TargetOrImmediateInstructionEmitter(JumpAbsoluteInstruction::new, JumpAbsoluteImmediateInstruction::new));
-
-        // Data transfer.
-        builder.put(MoveInstruction.NAME, new MoveInstructionEmitter());
-        builder.put(SaveInstruction.NAME, new UnaryInstructionEmitter(() -> SaveInstruction.INSTANCE));
-        builder.put(SwapInstruction.NAME, new UnaryInstructionEmitter(() -> SwapInstruction.INSTANCE));
-
-        // Arithmetic operations.
-        builder.put(NegateInstruction.NAME, new UnaryInstructionEmitter(() -> NegateInstruction.INSTANCE));
-        builder.put(AddInstruction.NAME, new TargetOrImmediateInstructionEmitter(AddInstruction::new, AddImmediateInstruction::new));
-        builder.put(SubtractInstruction.NAME, new TargetOrImmediateInstructionEmitter(SubtractInstruction::new, SubtractImmediateInstruction::new));
-        builder.put(MulInstruction.NAME, new TargetOrImmediateInstructionEmitter(MulInstruction::new, MulImmediateInstruction::new));
-        builder.put(DivInstruction.NAME, new TargetOrImmediateInstructionEmitter(DivInstruction::new, DivImmediateInstruction::new));
-        builder.put(ModuloInstruction.NAME, new TargetOrImmediateInstructionEmitter(ModuloInstruction::new, ModuloImmediateInstruction::new));
-
-        // Bitwise operations.
-        builder.put(BitwiseNotInstruction.NAME, new UnaryInstructionEmitter(() -> BitwiseNotInstruction.INSTANCE));
-        builder.put(BitwiseAndInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseAndInstruction::new, BitwiseAndImmediateInstruction::new));
-        builder.put(BitwiseOrInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseOrInstruction::new, BitwiseOrImmediateInstruction::new));
-        builder.put(BitwiseXorInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseXorInstruction::new, BitwiseXorImmediateInstruction::new));
-        builder.put(BitwiseShiftLeftInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseShiftLeftInstruction::new, BitwiseShiftLeftImmediateInstruction::new));
-        builder.put(BitwiseShiftRightInstruction.NAME, new TargetOrImmediateInstructionEmitter(BitwiseShiftRightInstruction::new, BitwiseShiftRightImmediateInstruction::new));
-
-        // Operations on LAST.
-        builder.put(LastRotateLeftInstruction.NAME, new UnaryInstructionEmitter(() -> LastRotateLeftInstruction.INSTANCE));
-        builder.put(LastRotateRightInstruction.NAME, new UnaryInstructionEmitter(() -> LastRotateRightInstruction.INSTANCE));
-
-        EMITTER_MAP = builder.build();
-    }
-
-    private Compiler() {
     }
 }

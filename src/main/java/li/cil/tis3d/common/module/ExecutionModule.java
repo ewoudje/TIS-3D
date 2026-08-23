@@ -41,31 +41,45 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private final MachineImpl machine;
-    private ParseException compileError;
-    private ExecutionState executionState = ExecutionState.IDLE;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT tag names.
     private static final String TAG_STATE = "state";
     private static final String TAG_MACHINE = "machine";
-
     // Data packet types.
     private static final byte DATA_TYPE_FULL = 0;
-    private static final byte DATA_TYPE_INCREMENTAL = 1;
 
     // --------------------------------------------------------------------- //
+    // Computed data
+    private static final byte DATA_TYPE_INCREMENTAL = 1;
+    private static final List<SourceCodeProvider> providers = new ArrayList<>(Arrays.asList(
+        new SourceCodeProviderVanilla(),
+        new SourceCodeProviderBookCode()
+    ));
+    private final MachineImpl machine;
+    private ParseException compileError;
+
+    // --------------------------------------------------------------------- //
+    private ExecutionState executionState = ExecutionState.IDLE;
 
     public ExecutionModule(final Casing casing, final Face face) {
         super(casing, face);
         machine = new MachineImpl(this, face);
     }
 
+    @Nullable
+    private static SourceCodeProvider providerFor(final ItemStack stack) {
+        if (!stack.isEmpty()) {
+            return providers.stream().filter(p -> p.worksFor(stack)).findFirst().orElse(null);
+        }
+        return null;
+    }
+
     public MachineState getState() {
         return machine.getState();
     }
+
+    // --------------------------------------------------------------------- //
+    // Module
+
     public ExecutionState getExecutionState() {
         return executionState;
     }
@@ -73,9 +87,6 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
     public @Nullable ParseException getCompileError() {
         return compileError;
     }
-
-    // --------------------------------------------------------------------- //
-    // Module
 
     @Override
     public void step() {
@@ -215,18 +226,23 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
         executionState = ExecutionState.values()[data.readByte()];
     }
 
+    // --------------------------------------------------------------------- //
+    // BlockChangeAware
+
     @Override
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        final CompoundTag machineTag = tag.getCompound(TAG_MACHINE);
-        getState().load(machineTag);
+        final CompoundTag machineTag = tag.getCompoundOrEmpty(TAG_MACHINE);
+        //TODO getState().load(machineTag);
         executionState = EnumUtils.load(ExecutionState.class, TAG_STATE, tag);
 
         if (getState().code != null) {
             compile(Arrays.asList(getState().code));
         }
     }
+
+    // --------------------------------------------------------------------- //
 
     @Override
     public void save(final CompoundTag tag) {
@@ -238,17 +254,12 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
         EnumUtils.save(executionState, TAG_STATE, tag);
     }
 
-    // --------------------------------------------------------------------- //
-    // BlockChangeAware
-
     @Override
     public void onNeighborBlockChange(final BlockPos neighborPos, final boolean isModuleNeighbor) {
         if (isModuleNeighbor && isVisible()) {
             sendPartialState();
         }
     }
-
-    // --------------------------------------------------------------------- //
 
     /**
      * Compile the specified lines of code, assuming this was issued by the
@@ -266,6 +277,8 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
             compileError = e;
         }
     }
+
+    // --------------------------------------------------------------------- //
 
     /**
      * Send the full state to the client.
@@ -296,8 +309,6 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
         getCasing().sendData(getFace(), data, DATA_TYPE_INCREMENTAL);
     }
 
-    // --------------------------------------------------------------------- //
-
     private interface SourceCodeProvider {
         boolean worksFor(ItemStack stack);
 
@@ -309,7 +320,7 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
         @Override
         public boolean worksFor(final ItemStack stack) {
             return Items.is(stack, net.minecraft.world.item.Items.WRITTEN_BOOK) ||
-                   Items.is(stack, net.minecraft.world.item.Items.WRITABLE_BOOK);
+                Items.is(stack, net.minecraft.world.item.Items.WRITABLE_BOOK);
         }
 
         @Override
@@ -350,18 +361,5 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
             }
             return data.getProgram();
         }
-    }
-
-    private static final List<SourceCodeProvider> providers = new ArrayList<>(Arrays.asList(
-        new SourceCodeProviderVanilla(),
-        new SourceCodeProviderBookCode()
-    ));
-
-    @Nullable
-    private static SourceCodeProvider providerFor(final ItemStack stack) {
-        if (!stack.isEmpty()) {
-            return providers.stream().filter(p -> p.worksFor(stack)).findFirst().orElse(null);
-        }
-        return null;
     }
 }

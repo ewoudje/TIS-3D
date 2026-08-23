@@ -7,11 +7,9 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
-import li.cil.tis3d.api.module.traits.ModuleWithBakedModel;
 import li.cil.tis3d.api.module.traits.ModuleWithBlockChangeListener;
 import li.cil.tis3d.api.module.traits.ModuleWithRedstone;
 import li.cil.tis3d.api.module.traits.ModuleWithRotation;
-import li.cil.tis3d.client.renderer.block.neoforge.ModuleBakedModel;
 import li.cil.tis3d.common.config.CommonConfig;
 import li.cil.tis3d.common.inventory.CasingInventory;
 import li.cil.tis3d.common.inventory.SidedInventoryProxy;
@@ -39,13 +37,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.model.data.ModelData;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
@@ -66,23 +65,20 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private final CasingInventory inventory = new CasingInventory(this);
-    private final CasingImpl casing = new CasingImpl(this);
-
-    /**
-     * Which receiving pipes of this casing are currently locked, per face.
-     */
-    private final boolean[][] locked = new boolean[6][4];
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT tag names.
     private static final String TAG_CASING = "casing";
     private static final String TAG_ENABLED = "enabled";
     private static final String TAG_INVENTORY = "inventory";
-    private static final String TAG_LOCKED = "locked";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
+    private static final String TAG_LOCKED = "locked";
+    private final CasingInventory inventory = new CasingInventory(this);
+    private final CasingImpl casing = new CasingImpl(this);
+    /**
+     * Which receiving pipes of this casing are currently locked, per face.
+     */
+    private final boolean[][] locked = new boolean[6][4];
     private ControllerBlockEntity controller;
     private boolean isEnabled;
     private boolean redstoneDirty = true;
@@ -91,6 +87,43 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
 
     public CasingBlockEntity(final BlockPos pos, final BlockState state) {
         super(BlockEntities.CASING.get(), pos, state);
+    }
+
+    private static void decompressClosed(final Optional<byte[]> compressed, final boolean[][] decompressed) {
+        byte[] content;
+        if (compressed.isEmpty() || (content = compressed.get()).length != 3) {
+            return;
+        }
+
+        for (int i = 0; i < 6; i++) {
+            int c = content[i >> 1] & 0b11111111;
+            if ((i & 1) == 1) {
+                c >>>= 4;
+            }
+            final boolean[] ports = decompressed[i];
+            for (int j = 0; j < 4; j++) {
+                ports[j] = (c & (1 << j)) != 0;
+            }
+        }
+    }
+
+    private static byte[] compressClosed(final boolean[][] decompressed) {
+        // Cram two faces into one byte (four ports use four bits).
+        final byte[] compressed = new byte[3];
+        for (int i = 0; i < 6; i++) {
+            final boolean[] ports = decompressed[i];
+            int c = 0;
+            for (int j = 0; j < 4; j++) {
+                if (ports[j]) {
+                    c |= 1 << j;
+                }
+            }
+            if ((i & 1) == 1) {
+                c <<= 4;
+            }
+            compressed[i >> 1] |= (byte) c;
+        }
+        return compressed;
     }
 
     @ApiStatus.Internal
@@ -139,6 +172,9 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         }
     }
 
+    // --------------------------------------------------------------------- //
+    // Networking
+
     /**
      * Get the current locked state of the specified <em>receiving</em> pipe
      * on the specified face of the casing.
@@ -163,9 +199,6 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     public void setInventorySlotContents(final int index, final ItemStack stack, final Port facing) {
         inventory.setInventorySlotContents(index, stack, facing);
     }
-
-    // --------------------------------------------------------------------- //
-    // Networking
 
     @Nullable
     public ControllerBlockEntity getController() {
@@ -238,6 +271,9 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         markRedstoneDirty();
     }
 
+    // --------------------------------------------------------------------- //
+    // PipeHost
+
     void stepRedstone() {
         if (!redstoneDirty) {
             return;
@@ -256,9 +292,6 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     void stepModules() {
         casing.stepModules();
     }
-
-    // --------------------------------------------------------------------- //
-    // PipeHost
 
     @Override
     protected void setNeighbor(final Face face, @Nullable final ComputerBlockEntity neighbor) {
@@ -279,6 +312,9 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         }
     }
 
+    // --------------------------------------------------------------------- //
+    // IInventory
+
     @Override
     public void onBeforeWriteComplete(final Face sendingFace, final Port sendingPort) {
         super.onBeforeWriteComplete(sendingFace, sendingPort);
@@ -288,6 +324,9 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
             module.onBeforeWriteComplete(sendingPort);
         }
     }
+
+    // --------------------------------------------------------------------- //
+    // SidedInventoryProxy
 
     @Override
     public void onWriteComplete(final Face sendingFace, final Port sendingPort) {
@@ -300,7 +339,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     // --------------------------------------------------------------------- //
-    // IInventory
+    // CasingProxy
 
     @Override
     public boolean stillValid(final Player player) {
@@ -312,7 +351,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     // --------------------------------------------------------------------- //
-    // SidedInventoryProxy
+    // InfraredReceiver
 
     @Override
     public WorldlyContainer getInventory() {
@@ -320,7 +359,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     // --------------------------------------------------------------------- //
-    // CasingProxy
+    // BlockEntity
 
     @Override
     public Casing getCasing() {
@@ -328,7 +367,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     // --------------------------------------------------------------------- //
-    // InfraredReceiver
+    // BlockEntityComputer
 
     @Override
     public void onInfraredPacket(final InfraredPacket packet, final HitResult hit) {
@@ -339,9 +378,6 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
             }
         }
     }
-
-    // --------------------------------------------------------------------- //
-    // BlockEntity
 
     @Override
     public void setRemoved() {
@@ -354,9 +390,6 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         dispose();
     }
 
-    // --------------------------------------------------------------------- //
-    // BlockEntityComputer
-
     @Override
     public Pipe getReceivingPipe(final Face face, final Port port) {
         return isReceivingPipeLocked(face, port) ? LockedPipe.INSTANCE : super.getReceivingPipe(face, port);
@@ -366,7 +399,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     protected void loadClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         super.loadClient(tag, registries);
 
-        isEnabled = tag.getBoolean(TAG_ENABLED);
+        isEnabled = tag.getBooleanOr(TAG_ENABLED, false);
 
         // This is a bit of a hack, but I can't find a better solution for now.
         //
@@ -411,16 +444,19 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         tag.putBoolean(TAG_ENABLED, isEnabled);
     }
 
+    // --------------------------------------------------------------------- //
+    // Synchronization
+
     @Override
     protected void loadCommon(final CompoundTag tag, HolderLookup.Provider registries) {
         super.loadCommon(tag, registries);
 
         decompressClosed(tag.getByteArray(TAG_LOCKED), locked);
 
-        final CompoundTag inventoryTag = tag.getCompound(TAG_INVENTORY);
+        final CompoundTag inventoryTag = tag.getCompoundOrEmpty(TAG_INVENTORY);
         inventory.load(inventoryTag, registries);
 
-        final CompoundTag casingTag = tag.getCompound(TAG_CASING);
+        final CompoundTag casingTag = tag.getCompoundOrEmpty(TAG_CASING);
         casing.load(casingTag);
     }
 
@@ -442,9 +478,6 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         casing.save(casingTag);
         tag.put(TAG_CASING, casingTag);
     }
-
-    // --------------------------------------------------------------------- //
-    // Synchronization
 
     /**
      * Used for synchronizing state between server and client, letting the
@@ -486,6 +519,8 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         isEnabled = value;
     }
 
+    // --------------------------------------------------------------------- //
+
     /**
      * Used for synchronizing state between server and client, letting the
      * client know of the new locked state of a port, for overlay rendering.
@@ -507,6 +542,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
             return modelData;
         }
 
+        /* TODO
         final ModuleBakedModel.CasingModules data = new ModuleBakedModel.CasingModules();
         for (final Face face : Face.VALUES) {
             final Module module = casing.getModule(face);
@@ -521,12 +557,10 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
             return ModelData.builder()
                 .with(ModuleBakedModel.CasingModules.CASING_MODULES_PROPERTY, data)
                 .build();
-        }
+        }*/
 
         return modelData;
     }
-
-    // --------------------------------------------------------------------- //
 
     @Nullable
     private ControllerBlockEntity findController() {
@@ -597,42 +631,6 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
 
         getBlockEntityLevel().playSound(null, getBlockPos(),
             SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, isReceivingPipeLocked(face, port) ? 0.5f : 0.6f);
-    }
-
-    private static void decompressClosed(final byte[] compressed, final boolean[][] decompressed) {
-        if (compressed.length != 3) {
-            return;
-        }
-
-        for (int i = 0; i < 6; i++) {
-            int c = compressed[i >> 1] & 0b11111111;
-            if ((i & 1) == 1) {
-                c >>>= 4;
-            }
-            final boolean[] ports = decompressed[i];
-            for (int j = 0; j < 4; j++) {
-                ports[j] = (c & (1 << j)) != 0;
-            }
-        }
-    }
-
-    private static byte[] compressClosed(final boolean[][] decompressed) {
-        // Cram two faces into one byte (four ports use four bits).
-        final byte[] compressed = new byte[3];
-        for (int i = 0; i < 6; i++) {
-            final boolean[] ports = decompressed[i];
-            int c = 0;
-            for (int j = 0; j < 4; j++) {
-                if (ports[j]) {
-                    c |= 1 << j;
-                }
-            }
-            if ((i & 1) == 1) {
-                c <<= 4;
-            }
-            compressed[i >> 1] |= (byte) c;
-        }
-        return compressed;
     }
 
     // --------------------------------------------------------------------- //

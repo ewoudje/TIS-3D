@@ -1,14 +1,10 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,8 +12,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Optional;
 
@@ -26,33 +20,29 @@ public final class KeypadModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    /**
-     * The current value being input.
-     */
-    private Optional<Short> value = Optional.empty();
+    // Rendering info.
+    public static final float KEYS_U0 = 5 / 32f;
 
     // --------------------------------------------------------------------- //
     // Computed data
-
-    // NBT tag names.
-    private static final String TAG_VALUE = "value";
-
-    // Data packet types.
-    private static final byte DATA_TYPE_VALUE = 0;
-
-    // Rendering info.
-    public static final float KEYS_U0 = 5 / 32f;
     public static final float KEYS_V0 = 5 / 32f;
     public static final float KEYS_SIZE_U = 5 / 32f;
     public static final float KEYS_SIZE_V = 5 / 32f;
     public static final float KEYS_SIZE_V_LAST = 4 / 32f;
     public static final float KEYS_STEP_U = 6 / 32f;
     public static final float KEYS_STEP_V = 6 / 32f;
-
+    // NBT tag names.
+    private static final String TAG_VALUE = "value";
+    // Data packet types.
+    private static final byte DATA_TYPE_VALUE = 0;
     // Pitch lookup for click feedback sound cue per value, 0-9.
     // Roughly based on telephone keypad frequencies, except we have to mush
     // both tones into one, so obviously some fidelity is lost, but eh.
     private static final float[] VALUE_TO_PITCH = new float[]{0.9125f, 0.7f, 0.75f, 0.825f, 0.725f, 0.8f, 0.875f, 0.775f, 0.85f, 0.95f};
+    /**
+     * The current value being input.
+     */
+    private Optional<Short> value = Optional.empty();
 
     // --------------------------------------------------------------------- //
 
@@ -60,12 +50,16 @@ public final class KeypadModule extends AbstractModuleWithRotation {
         super(casing, face);
     }
 
-    public Optional<Short> getValue() {
-        return value;
+    public static short buttonToNumber(final int button) {
+        return (short) ((button + 1) % 10);
     }
 
     // --------------------------------------------------------------------- //
     // Module
+
+    public Optional<Short> getValue() {
+        return value;
+    }
 
     @Override
     public void step() {
@@ -144,16 +138,13 @@ public final class KeypadModule extends AbstractModuleWithRotation {
         if (level.isClientSide()) {
             // Got state on which key is currently 'pressed'.
             if (data.contains(TAG_VALUE)) {
-                value = Optional.of(data.getShort(TAG_VALUE));
+                value = data.getShort(TAG_VALUE);
             } else {
                 value = Optional.empty();
             }
-        } else if (value.isEmpty() && data.contains(TAG_VALUE)) {
-            // Got an input and don't have one yet.
-            final short newValue = data.getShort(TAG_VALUE);
-            value = Optional.of(newValue);
+        } else if (value.isEmpty() && (value = data.getShort(TAG_VALUE)).isPresent()) {
             getCasing().sendData(getFace(), data, DATA_TYPE_VALUE);
-            getCasing().getCasingLevel().playSound(null, getCasing().getPosition(), SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, VALUE_TO_PITCH[newValue]);
+            getCasing().getCasingLevel().playSound(null, getCasing().getPosition(), SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, VALUE_TO_PITCH[value.get()]);
             getCasing().setChanged();
         }
     }
@@ -162,10 +153,10 @@ public final class KeypadModule extends AbstractModuleWithRotation {
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        if (tag.contains(TAG_VALUE)) {
-            value = Optional.of(tag.getShort(TAG_VALUE));
-        }
+        value = tag.getShort(TAG_VALUE);
     }
+
+    // --------------------------------------------------------------------- //
 
     @Override
     public void save(final CompoundTag tag) {
@@ -173,8 +164,6 @@ public final class KeypadModule extends AbstractModuleWithRotation {
 
         value.ifPresent(x -> tag.putShort(TAG_VALUE, x));
     }
-
-    // --------------------------------------------------------------------- //
 
     private void stepOutput() {
         if (value.isEmpty()) {
@@ -232,9 +221,5 @@ public final class KeypadModule extends AbstractModuleWithRotation {
         }
 
         return button;
-    }
-
-    public static short buttonToNumber(final int button) {
-        return (short) ((button + 1) % 10);
     }
 }

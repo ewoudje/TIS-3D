@@ -47,6 +47,9 @@ public final class Color {
         BLACK  // 15: Black
     };
 
+    private Color() {
+    }
+
     /**
      * Get an ARGB color value for the dye color with the specified index.
      *
@@ -68,6 +71,8 @@ public final class Color {
         return ((int) (Math.max(0, Math.min(1, alpha)) * 0xFF) << 24) | (color & 0xFFFFFF);
     }
 
+    // --------------------------------------------------------------------- //
+
     /**
      * Creates a gray color with the the specified value.
      *
@@ -77,10 +82,5 @@ public final class Color {
     public static int monochrome(final float brightness) {
         final int component = (int) (Math.max(0, Math.min(1, brightness)) * 0xFF);
         return 0xFF000000 | (component << 16) | (component << 8) | component;
-    }
-
-    // --------------------------------------------------------------------- //
-
-    private Color() {
     }
 }

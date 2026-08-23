@@ -18,6 +18,12 @@ public final class LabelInstructionEmitter extends AbstractInstructionEmitter {
         this.constructor = constructor;
     }
 
+    private static void validateLabel(final MachineState state, final String label, final Matcher matcher, final int lineNumber) throws ParseException {
+        if (!state.labels.containsKey(label)) {
+            throw new ParseException(Strings.MESSAGE_LABEL_NOT_FOUND, lineNumber, matcher.start("arg1"), matcher.end("arg1"));
+        }
+    }
+
     @Override
     public Instruction compile(final Matcher matcher, final int lineNumber, final Map<String, String> defines, final List<Validator> validators) throws ParseException {
         final String label = checkArg(lineNumber, matcher, "arg1", "name");
@@ -26,11 +32,5 @@ public final class LabelInstructionEmitter extends AbstractInstructionEmitter {
         validators.add(state -> validateLabel(state, label, matcher, lineNumber));
 
         return constructor.apply(label);
-    }
-
-    private static void validateLabel(final MachineState state, final String label, final Matcher matcher, final int lineNumber) throws ParseException {
-        if (!state.labels.containsKey(label)) {
-            throw new ParseException(Strings.MESSAGE_LABEL_NOT_FOUND, lineNumber, matcher.start("arg1"), matcher.end("arg1"));
-        }
     }
 }

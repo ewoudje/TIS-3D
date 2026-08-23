@@ -1,7 +1,10 @@
 # Items
-This index lists all of the documented items in TIS-3D. If you're looking for a block, check out the [block index](../block/index.md) instead.
+
+This index lists all of the documented items in TIS-3D. If you're looking for a block, check out
+the [block index](../block/index.md) instead.
 
 ## Modules
+
 - [Audio Module](audio_module.md)
 - [Display Module](display_module.md)
 - [Execution Module](execution_module.md)
@@ -20,6 +23,7 @@ This index lists all of the documented items in TIS-3D. If you're looking for a 
 - [Timer Module](timer_module.md)
 
 ## Utility
+
 - [Key](key.md)
 - [Manual](manual.md)
 - [Code Bible](code_book.md)

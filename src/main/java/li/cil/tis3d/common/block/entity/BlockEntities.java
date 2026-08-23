@@ -15,19 +15,23 @@ public final class BlockEntities {
 
     // --------------------------------------------------------------------- //
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CasingBlockEntity>> CASING = register(Blocks.CASING, CasingBlockEntity::new);
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControllerBlockEntity>> CONTROLLER = register(Blocks.CONTROLLER, ControllerBlockEntity::new);
-
-    // --------------------------------------------------------------------- //
-
     public static void initialize(IEventBus bus) {
         BLOCK_ENTITY_TYPES.register(bus);
     }
 
-    // --------------------------------------------------------------------- //
-
     @SuppressWarnings("ConstantConditions") // .build(null) is fine
     private static <B extends Block, T extends BlockEntity> DeferredHolder<BlockEntityType<?>, BlockEntityType<T>> register(final DeferredHolder<Block, B> block, final BlockEntityType.BlockEntitySupplier<T> factory) {
-        return BLOCK_ENTITY_TYPES.register(block.getId().getPath(), () -> BlockEntityType.Builder.of(factory, block.get()).build(null));
+        return BLOCK_ENTITY_TYPES.register(block.getId().getPath(), () -> new BlockEntityType<>(factory, block.get()));
     }
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CasingBlockEntity>> CASING = register(Blocks.CASING, CasingBlockEntity::new);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControllerBlockEntity>> CONTROLLER = register(Blocks.CONTROLLER, ControllerBlockEntity::new);
+
+    // --------------------------------------------------------------------- //
+
+
+    // --------------------------------------------------------------------- //
+
+
 }

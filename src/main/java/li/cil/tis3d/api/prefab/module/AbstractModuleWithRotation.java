@@ -1,15 +1,12 @@
 package li.cil.tis3d.api.prefab.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.traits.ModuleWithRotation;
 import li.cil.tis3d.api.util.TransformUtil;
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
 
 /**
  * This is a utility implementation of a rotatable module.
@@ -25,13 +22,12 @@ public abstract class AbstractModuleWithRotation extends AbstractModule implemen
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private Port facing = Port.UP;
+    // NBT tag names.
+    private static final String FACING_TAG = "facing";
 
     // --------------------------------------------------------------------- //
     // Computed data
-
-    // NBT tag names.
-    private static final String FACING_TAG = "facing";
+    private Port facing = Port.UP;
 
     // --------------------------------------------------------------------- //
 
@@ -54,7 +50,7 @@ public abstract class AbstractModuleWithRotation extends AbstractModule implemen
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        facing = Port.VALUES[Math.max(0, tag.getByte(FACING_TAG)) % Port.VALUES.length];
+        facing = Port.VALUES[Math.max(0, tag.getByteOr(FACING_TAG, (byte) 0)) % Port.VALUES.length];
     }
 
     @Override

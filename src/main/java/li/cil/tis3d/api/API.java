@@ -2,7 +2,7 @@ package li.cil.tis3d.api;
 
 import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.util.ClientSided;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 
 import java.util.function.Supplier;
@@ -27,10 +27,10 @@ public final class API {
     @ClientSided
     public static FontRenderer smallFontRenderer;
 
-    public static ResourceLocation resource(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    private API() {
     }
 
-    private API() {
+    public static Identifier resource(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 }

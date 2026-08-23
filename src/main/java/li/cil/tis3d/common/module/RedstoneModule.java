@@ -1,6 +1,5 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import li.cil.tis3d.api.machine.Casing;
@@ -9,32 +8,24 @@ import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.traits.ModuleWithRedstone;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public final class RedstoneModule extends AbstractModuleWithRotation implements ModuleWithRedstone {
     // --------------------------------------------------------------------- //
     // Persisted data
 
-    private short output = 0;
-    private short input = 0;
-
-    // --------------------------------------------------------------------- //
-    // Computed data
-
     // NBT tag names.
     private static final String TAG_OUTPUT = "output";
     private static final String TAG_INPUT = "input";
 
+    // --------------------------------------------------------------------- //
+    // Computed data
     // Data packet types.
     private static final byte DATA_TYPE_UPDATE = 0;
-
+    private short output = 0;
+    private short input = 0;
     /**
      * The last tick we updated. Used to avoid changing output multiple times a
      * tick, which is usually pointless and really bad for performance.
@@ -103,8 +94,8 @@ public final class RedstoneModule extends AbstractModuleWithRotation implements 
     public void load(final CompoundTag tag) {
         super.load(tag);
 
-        output = (short) Math.max(0, Math.min(15, tag.getShort(TAG_OUTPUT)));
-        input = (short) Math.max(0, Math.min(15, tag.getShort(TAG_INPUT)));
+        output = (short) Math.clamp(tag.getShortOr(TAG_OUTPUT, (short) 0), 0, 15);
+        input = (short) Math.clamp(tag.getShortOr(TAG_INPUT, (short) 0), 0, 15);
     }
 
     @Override
@@ -120,11 +111,6 @@ public final class RedstoneModule extends AbstractModuleWithRotation implements 
 
     public int getRedstoneInput() {
         return input;
-    }
-
-    @Override
-    public short getRedstoneOutput() {
-        return output;
     }
 
     @Override
@@ -153,7 +139,35 @@ public final class RedstoneModule extends AbstractModuleWithRotation implements 
         sendData();
     }
 
+    @Override
+    public short getRedstoneOutput() {
+        return output;
+    }
+
     // --------------------------------------------------------------------- //
+
+    /**
+     * Update the redstone signal we're outputting.
+     *
+     * @param value the new output value.
+     */
+    private void setRedstoneOutput(final short value) {
+        // Clamp to valid redstone range.
+        final short validatedValue = (short) Math.max(0, Math.min(15, value));
+        if (validatedValue == output) {
+            return;
+        }
+
+        output = validatedValue;
+
+        // If the value changed, make sure we're saved.
+        getCasing().setChanged();
+
+        // Notify neighbors, avoid multiple block updates per tick.
+        scheduledNeighborUpdate = true;
+
+        sendData();
+    }
 
     /**
      * Update the output of the module, pushing a value read from any pipe.
@@ -177,29 +191,6 @@ public final class RedstoneModule extends AbstractModuleWithRotation implements 
         if (receivingPipe.canTransfer()) {
             setRedstoneOutput(receivingPipe.read());
         }
-    }
-
-    /**
-     * Update the redstone signal we're outputting.
-     *
-     * @param value the new output value.
-     */
-    private void setRedstoneOutput(final short value) {
-        // Clamp to valid redstone range.
-        final short validatedValue = (short) Math.max(0, Math.min(15, value));
-        if (validatedValue == output) {
-            return;
-        }
-
-        output = validatedValue;
-
-        // If the value changed, make sure we're saved.
-        getCasing().setChanged();
-
-        // Notify neighbors, avoid multiple block updates per tick.
-        scheduledNeighborUpdate = true;
-
-        sendData();
     }
 
     /**

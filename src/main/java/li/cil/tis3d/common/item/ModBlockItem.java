@@ -5,30 +5,21 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.block.Block;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 public class ModBlockItem extends BlockItem {
     public ModBlockItem(final Block block, final Properties properties) {
         super(block, properties);
     }
 
-    public ModBlockItem(final Block block) {
-        this(block, createProperties());
-    }
-
     // --------------------------------------------------------------------- //
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
-        TooltipUtils.tryAddDescription(stack, tooltipComponents);
-    }
-
-    // --------------------------------------------------------------------- //
-
-    protected static Properties createProperties() {
-        return new Properties();
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag);
+        TooltipUtils.tryAddDescription(stack, tooltipAdder);
     }
 }

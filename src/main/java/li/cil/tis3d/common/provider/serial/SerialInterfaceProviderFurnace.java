@@ -47,12 +47,6 @@ public final class SerialInterfaceProviderFurnace implements SerialInterfaceProv
 
     private static final class SerialInterfaceFurnace implements SerialInterface {
         private static final String TAG_MODE = "mode";
-
-        private enum Mode {
-            PercentageFuel,
-            PercentageProgress
-        }
-
         private final FurnaceBlockEntity furnace;
         private Mode mode = Mode.PercentageFuel;
 
@@ -83,15 +77,15 @@ public final class SerialInterfaceProviderFurnace implements SerialInterfaceProv
         public short peek() {
             switch (mode) {
                 case PercentageFuel: {
-                    final int value = furnace.litTime;
-                    final int total = furnace.litDuration;
+                    final int value = 0; //TODO furnace.litTime;
+                    final int total = 0; //TODO furnace.litDuration;
                     if (total > 0) {
                         return (short) (value * 100 / total);
                     }
                 }
                 case PercentageProgress: {
-                    final int value = furnace.cookingProgress;
-                    final int total = furnace.cookingTotalTime;
+                    final int value = 0; //TODO furnace.cookingProgress;
+                    final int total = 0; //TODO furnace.cookingTotalTime;
                     if (total > 0) {
                         return (short) (value * 100 / total);
                     }
@@ -117,6 +111,11 @@ public final class SerialInterfaceProviderFurnace implements SerialInterfaceProv
         @Override
         public void save(final CompoundTag tag) {
             EnumUtils.save(mode, TAG_MODE, tag);
+        }
+
+        private enum Mode {
+            PercentageFuel,
+            PercentageProgress
         }
     }
 }

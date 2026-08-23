@@ -15,10 +15,7 @@ import javax.annotation.Nullable;
  * filter methods for blocks to take into account.
  */
 public final class Raytracing {
-    @FunctionalInterface
-    public interface CollisionDetector {
-        @Nullable
-        HitResult intersect(final Level level, final BlockPos position, final Vec3 start, final Vec3 end);
+    private Raytracing() {
     }
 
     /**
@@ -33,8 +30,8 @@ public final class Raytracing {
     @Nullable
     public static HitResult intersectIgnoringTransparent(final Level level, final BlockPos position, final Vec3 start, final Vec3 end) {
         final BlockState state = level.getBlockState(position);
-        if (state.isSolidRender(level, position)) {
-            final VoxelShape shape = state.getOcclusionShape(level, position);
+        if (state.isSolidRender()) {
+            final VoxelShape shape = state.getOcclusionShape();
             if (!shape.isEmpty()) {
                 return shape.clip(start, end, position);
             }
@@ -133,6 +130,9 @@ public final class Raytracing {
 
     // --------------------------------------------------------------------- //
 
-    private Raytracing() {
+    @FunctionalInterface
+    public interface CollisionDetector {
+        @Nullable
+        HitResult intersect(final Level level, final BlockPos position, final Vec3 start, final Vec3 end);
     }
 }
