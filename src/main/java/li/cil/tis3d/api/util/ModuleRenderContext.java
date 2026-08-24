@@ -1,18 +1,20 @@
 package li.cil.tis3d.api.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import li.cil.manual.api.render.FontRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import li.cil.tis3d.api.machine.Face;
+import li.cil.tis3d.api.machine.Port;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.HitResult;
 
 /**
  * Wraps up render context and provides several convenience methods for {@link li.cil.tis3d.api.module.Module} rendering.
  */
-public interface RenderContext {
+public interface ModuleRenderContext {
     /**
      * Gets the current renderer in use for the context in which this module is being rendered.
      *
@@ -37,14 +39,19 @@ public interface RenderContext {
      */
     float getPartialTicks();
 
-    /**
-     * The current render buffer in use for this context.
-     * <p>
-     * Used to obtain buffer builders for batched rendering.
-     *
-     * @return the current buffer.
-     */
-    MultiBufferSource getBuffer();
+    boolean isSneaking();
+
+    boolean isLocked();
+
+    HitResult getHitResult();
+
+    Face getFace();
+
+    boolean isLookingAt();
+
+    boolean isKindaClose();
+
+    boolean isReceivingPipeLocked(Port port);
 
     /**
      * Utility method to determine if the observer we are rendering for is close enough so that detailed
@@ -53,7 +60,7 @@ public interface RenderContext {
      * @param position the position for which to check if the observer is close enough.
      * @return {@code true} if details should be rendered, {@code false} otherwise.
      */
-    boolean closeEnoughForDetails(BlockPos position);
+    boolean closeEnoughForDetails();
 
     /**
      * Draws a character sequence using the specified font renderer in the current render context.
@@ -129,27 +136,27 @@ public interface RenderContext {
     /**
      * Draws a quad with the specified size.
      *
-     * @param builder the buffer builder to emit the quad into.
+     * @param type    the type render the quad with.
      * @param x       the x coordinate of the minimum corner of the quad.
      * @param y       the y coordinate of the minimum corner of the quad.
      * @param width   the width of the quad.
      * @param height  the height of the quad.
      */
-    void drawQuad(final VertexConsumer builder, final float x, final float y, final float width, final float height);
+    void drawQuad(final RenderType type, final float x, final float y, final float width, final float height);
 
     /**
      * Draws a quad with the specified size and the specified tint.
      *
-     * @param builder the buffer builder to emit the quad into.
+     * @param type    the type render the quad with.
      * @param x       the x coordinate of the minimum corner of the quad.
      * @param y       the y coordinate of the minimum corner of the quad.
      * @param width   the width of the quad.
      * @param height  the height of the quad.
      * @param argb    the color tint of the quad as an ARGB color.
      */
-    default void drawQuad(final VertexConsumer builder, final float x, final float y,
+    default void drawQuad(final RenderType type, final float x, final float y,
                           final float width, final float height, final int argb) {
-        drawQuad(builder, x, y, width, height, 0, 0, 1, 1, argb);
+        drawQuad(type, x, y, width, height, 0, 0, 1, 1, argb);
     }
 
     /**
@@ -159,7 +166,7 @@ public interface RenderContext {
      * <p>
      * The texture coordinates are in texture-local space, so will typically be in the range of [0, 1].
      *
-     * @param builder the buffer builder to emit the quad into.
+     * @param type    the type render the quad with.
      * @param sprite  the texture to draw.
      * @param x       the x coordinate of the minimum corner of the quad.
      * @param y       the y coordinate of the minimum corner of the quad.
@@ -171,14 +178,14 @@ public interface RenderContext {
      * @param v1      the v component of the UV coordinate of the maximum corner of the quad.
      * @param argb    the color tint of the quad as an ARGB color.
      */
-    default void drawAtlasQuad(final VertexConsumer builder, final TextureAtlasSprite sprite,
+    default void drawAtlasQuad(final RenderType type, final TextureAtlasSprite sprite,
                                final float x, final float y, final float width, final float height,
                                final float u0, final float v0, final float u1, final float v1, final int argb) {
         final float atlasU0 = sprite.getU(u0);
         final float atlasV0 = sprite.getV(v0);
         final float atlasU1 = sprite.getU(u1);
         final float atlasV1 = sprite.getV(v1);
-        drawQuad(builder, x, y, width, height, atlasU0, atlasV0, atlasU1, atlasV1, argb);
+        drawQuad(type, x, y, width, height, atlasU0, atlasV0, atlasU1, atlasV1, argb);
     }
 
     /**
@@ -188,7 +195,7 @@ public interface RenderContext {
      * that for atlas textures they must be in atlas space, for regular textures they must be in
      * texture-local space.
      *
-     * @param builder the buffer builder to emit the quad into.
+     * @param type    the type render the quad with.
      * @param x       the x coordinate of the minimum corner of the quad.
      * @param y       the y coordinate of the minimum corner of the quad.
      * @param width   the width of the quad.
@@ -199,6 +206,6 @@ public interface RenderContext {
      * @param v1      the v component of the UV coordinate of the maximum corner of the quad.
      * @param argb    the color tint of the quad as an ARGB color.
      */
-    void drawQuad(VertexConsumer builder, float x, float y, float width, float height,
+    void drawQuad(final RenderType type, float x, float y, float width, float height,
                   float u0, float v0, float u1, float v1, int argb);
 }

@@ -5,7 +5,7 @@ import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.QueueModule;
 import li.cil.tis3d.util.Color;
@@ -18,7 +18,7 @@ public class QueueModuleRenderer extends AbstractModuleWithRotationRenderer<Queu
     }
 
     @Override
-    public void render(final QueueModule module, final RenderContext context) {
+    public void render(final QueueModule module, final ModuleRenderContext context) {
         final PoseStack matrixStack = context.getMatrixStack();
         matrixStack.pushPose();
         rotateForRendering(module, matrixStack);
@@ -26,14 +26,14 @@ public class QueueModuleRenderer extends AbstractModuleWithRotationRenderer<Queu
         context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_QUEUE);
 
         // Render detailed state when player is close.
-        if (!module.isEmpty() && context.closeEnoughForDetails(module.getCasing().getPosition())) {
+        if (!module.isEmpty() && context.closeEnoughForDetails()) {
             drawState(module, context);
         }
 
         matrixStack.popPose();
     }
 
-    private void drawState(final QueueModule module, final RenderContext context) {
+    private void drawState(final QueueModule module, final ModuleRenderContext context) {
         final PoseStack matrixStack = context.getMatrixStack();
 
         // Offset to start drawing at top left of inner area, slightly inset.

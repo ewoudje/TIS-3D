@@ -2,6 +2,7 @@ package li.cil.tis3d.client;
 
 import li.cil.tis3d.client.asset.AssetGenerators;
 import li.cil.tis3d.client.gui.ReadOnlyMemoryModuleScreen;
+import li.cil.tis3d.client.renderer.ModRenderPipelines;
 import li.cil.tis3d.client.renderer.ModuleRenderers;
 import li.cil.tis3d.client.renderer.color.CasingBlockColor;
 import li.cil.tis3d.client.renderer.entity.NullEntityRenderer;
@@ -21,6 +22,8 @@ public final class ClientBootstrap {
     public static void setup(IEventBus bus) {
         ModuleRenderers.initialize(bus);
         bus.addListener(AssetGenerators::gatherData);
+
+        ModRenderPipelines.register(bus);
 
         bus.addListener((RegisterColorHandlersEvent.Block e) ->
             e.register(new CasingBlockColor(), Blocks.CASING.get()));

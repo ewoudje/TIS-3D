@@ -2,7 +2,7 @@ package li.cil.tis3d.client.renderer.module;
 
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.common.module.FacadeModule;
 
 public class FacadeModuleRenderer extends AbstractModuleRenderer<FacadeModule> {
@@ -13,7 +13,7 @@ public class FacadeModuleRenderer extends AbstractModuleRenderer<FacadeModule> {
     }
 
     @Override
-    public void render(final FacadeModule module, final RenderContext context) {
+    public void render(final FacadeModule module, final ModuleRenderContext context) {
 
     }
 }

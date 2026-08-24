@@ -5,7 +5,7 @@ import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.TerminalModule;
 import li.cil.tis3d.util.Color;
@@ -20,7 +20,7 @@ public class TerminalModuleRenderer extends AbstractModuleWithRotationRenderer<T
     }
 
     @Override
-    public void render(final TerminalModule module, final RenderContext context) {
+    public void render(final TerminalModule module, final ModuleRenderContext context) {
         if (!module.getCasing().isEnabled()) {
             return;
         }
@@ -29,7 +29,7 @@ public class TerminalModuleRenderer extends AbstractModuleWithRotationRenderer<T
         matrixStack.pushPose();
         rotateForRendering(module, matrixStack);
 
-        if (context.closeEnoughForDetails(module.getCasing().getPosition())) {
+        if (context.closeEnoughForDetails()) {
             // Player is close, render actual terminal text.
             renderText(module, context);
         } else {
@@ -40,7 +40,7 @@ public class TerminalModuleRenderer extends AbstractModuleWithRotationRenderer<T
         matrixStack.popPose();
     }
 
-    private void renderText(final TerminalModule module, final RenderContext context) {
+    private void renderText(final TerminalModule module, final ModuleRenderContext context) {
         final PoseStack matrixStack = context.getMatrixStack();
         matrixStack.translate(2f / 16f, 2f / 16f, 0);
         matrixStack.scale(1 / 512f, 1 / 512f, 1);
@@ -60,7 +60,7 @@ public class TerminalModuleRenderer extends AbstractModuleWithRotationRenderer<T
         renderInput(module, context, fontRenderer, textWidth);
     }
 
-    private void renderDisplay(final RenderContext context, final List<StringBuilder> display, final FontRenderer fontRenderer) {
+    private void renderDisplay(final ModuleRenderContext context, final List<StringBuilder> display, final FontRenderer fontRenderer) {
         final PoseStack matrixStack = context.getMatrixStack();
         for (final StringBuilder line : display) {
             context.drawString(fontRenderer, line, Color.WHITE);
@@ -68,7 +68,7 @@ public class TerminalModuleRenderer extends AbstractModuleWithRotationRenderer<T
         }
     }
 
-    private void renderInput(final TerminalModule module, final RenderContext context, final FontRenderer fontRenderer, final int textWidth) {
+    private void renderInput(final TerminalModule module, final ModuleRenderContext context, final FontRenderer fontRenderer, final int textWidth) {
         final PoseStack matrixStack = context.getMatrixStack();
         final var input = module.getInput();
 

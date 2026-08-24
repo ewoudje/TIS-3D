@@ -5,7 +5,7 @@ import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.TimerModule;
 import li.cil.tis3d.util.Color;
@@ -18,7 +18,7 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
     }
 
     @Override
-    public void render(final TimerModule module, final RenderContext context) {
+    public void render(final TimerModule module, final ModuleRenderContext context) {
         if (!module.getCasing().isEnabled()) {
             return;
         }
@@ -30,7 +30,7 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
         context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_TIMER);
 
         // Render detailed state when player is close.
-        if (!module.hasElapsed() && context.closeEnoughForDetails(module.getCasing().getPosition())) {
+        if (!module.hasElapsed() && context.closeEnoughForDetails()) {
             final long gameTime = 0; //TODO context.getDispatcher().level.getGameTime();
             final float remaining = (float) (module.getTimer() - gameTime) - context.getPartialTicks();
             if (remaining <= 0) {
@@ -43,7 +43,7 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
         matrixStack.popPose();
     }
 
-    private void drawState(final TimerModule module, final RenderContext context, final float remaining) {
+    private void drawState(final TimerModule module, final ModuleRenderContext context, final float remaining) {
         final float milliseconds = remaining * 50f; // One tick is 50ms.
         final float seconds = milliseconds / 1000f;
         final int minutes = (int) (seconds / 60f);

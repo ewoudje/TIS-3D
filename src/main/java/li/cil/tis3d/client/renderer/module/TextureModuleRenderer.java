@@ -2,7 +2,7 @@ package li.cil.tis3d.client.renderer.module;
 
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import net.minecraft.resources.Identifier;
 
 public class TextureModuleRenderer<T extends Module> implements ModuleRenderer<T> {
@@ -20,7 +20,7 @@ public class TextureModuleRenderer<T extends Module> implements ModuleRenderer<T
     }
 
     @Override
-    public void render(final T module, final RenderContext context) {
+    public void render(final T module, final ModuleRenderContext context) {
         if (!module.getCasing().isEnabled()) {
             return;
         }

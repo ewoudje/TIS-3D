@@ -2,11 +2,10 @@ package li.cil.tis3d.client.renderer.module;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.ModRenderTypes;
 import li.cil.tis3d.common.module.DisplayModule;
 import net.minecraft.client.Minecraft;
@@ -54,7 +53,7 @@ public class DisplayModuleRenderer extends AbstractModuleWithRotationRenderer<Di
     }
 
     @Override
-    public void render(final DisplayModule module, final RenderContext context) {
+    public void render(final DisplayModule module, final ModuleRenderContext context) {
         if (!module.getCasing().isEnabled()) {
             return;
         }
@@ -67,8 +66,11 @@ public class DisplayModuleRenderer extends AbstractModuleWithRotationRenderer<Di
         if (module.resetImageDirty())
             renderData.write(module.getImage());
 
-        final VertexConsumer builder = context.getBuffer().getBuffer(renderData.renderType());
-        context.drawQuad(builder, MARGIN / 32f, MARGIN / 32f, DisplayModule.RESOLUTION / 32f, DisplayModule.RESOLUTION / 32f);
+        context.drawQuad(
+            renderData.renderType(),
+            MARGIN / 32f, MARGIN / 32f,
+            DisplayModule.RESOLUTION / 32f, DisplayModule.RESOLUTION / 32f
+        );
 
         matrixStack.popPose();
     }

@@ -5,7 +5,7 @@ import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.ExecutionModule;
 import li.cil.tis3d.common.module.execution.ExecutionState;
@@ -24,8 +24,8 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
     }
 
     @Override
-    public void render(final ExecutionModule module, final RenderContext context) {
-        if ((!module.getCasing().isEnabled() || !module.isVisible()) /*&& !isHitFace(module, context.getDispatcher().cameraHitResult)*/) {
+    public void render(final ExecutionModule module, final ModuleRenderContext context) {
+        if (!module.getCasing().isEnabled() || !module.isVisible() || !context.isLookingAt()) {
             return;
         }
 
@@ -38,14 +38,14 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
 
         // Render detailed state when player is close.
         final MachineState machineState = module.getState();
-        if (machineState.code != null && context.closeEnoughForDetails(module.getCasing().getPosition())) {
+        if (machineState.code != null && context.closeEnoughForDetails()) {
             renderState(module, context, machineState);
         }
 
         matrixStack.popPose();
     }
 
-    private void renderState(final ExecutionModule module, final RenderContext context, final MachineState machineState) {
+    private void renderState(final ExecutionModule module, final ModuleRenderContext context, final MachineState machineState) {
         final ExecutionState executionState = module.getExecutionState();
         final ParseException compileError = module.getCompileError();
         final PoseStack matrixStack = context.getMatrixStack();
@@ -115,7 +115,7 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
      *
      * @param height the height of the line to draw.
      */
-    private void drawLine(final RenderContext context, final int height, final int color) {
+    private void drawLine(final ModuleRenderContext context, final int height, final int color) {
         context.drawQuadUnlit(-0.5f, -0.5f, 72, height + 1, color);
     }
 

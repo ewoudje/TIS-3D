@@ -3,7 +3,7 @@ package li.cil.tis3d.client.renderer.module;
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.KeypadModule;
 import li.cil.tis3d.util.Color;
@@ -24,7 +24,7 @@ public class KeypadModuleRenderer extends AbstractModuleWithRotationRenderer<Key
     }
 
     @Override
-    public void render(final KeypadModule module, final RenderContext context) {
+    public void render(final KeypadModule module, final ModuleRenderContext context) {
         if (!module.getCasing().isEnabled() || !module.isVisible()) {
             return;
         }
@@ -55,7 +55,7 @@ public class KeypadModuleRenderer extends AbstractModuleWithRotationRenderer<Key
         matrixStack.popPose();
     }
 
-    private void drawButtonOverlay(final RenderContext context, final int button) {
+    private void drawButtonOverlay(final ModuleRenderContext context, final int button) {
         final int column = button % 3;
         final int row = button / 3;
         final float x = KEYS_U0 + column * KEYS_STEP_U;

@@ -66,21 +66,21 @@ public final class ModModelProvider extends ModelProvider {
         simpleItem(itemModels, Items.PRISM);
 
         itemModule(itemModels, Items.AUDIO_MODULE, "block/overlay/audio_module");
-        itemModule(itemModels, Items.DISPLAY_MODULE, "item/display_module");
+        itemModule(itemModels, Items.DISPLAY_MODULE, "block/item/display_module");
         itemModule(itemModels, Items.EXECUTION_MODULE, "block/overlay/execution_module_running");
         itemModule(itemModels, Items.FACADE_MODULE, mcLocation("block/iron_block"));
         itemModule(itemModels, Items.INFRARED_MODULE, "block/overlay/infrared_module");
         itemModule(itemModels, Items.KEYPAD_MODULE, "block/overlay/keypad_module");
-        itemModule(itemModels, Items.QUEUE_MODULE, "item/queue_module");
+        itemModule(itemModels, Items.QUEUE_MODULE, "block/item/queue_module");
         itemModule(itemModels, Items.RANDOM_MODULE, "block/overlay/random_module");
-        itemModule(itemModels, Items.RANDOM_ACCESS_MEMORY_MODULE, "item/random_access_memory_module");
-        itemModule(itemModels, Items.READ_ONLY_MEMORY_MODULE, "item/read_only_memory_module");
-        itemModule(itemModels, Items.REDSTONE_MODULE, "item/redstone_module");
-        itemModule(itemModels, Items.SEQUENCER_MODULE, "item/sequencer_module");
+        itemModule(itemModels, Items.RANDOM_ACCESS_MEMORY_MODULE, "block/item/random_access_memory_module");
+        itemModule(itemModels, Items.READ_ONLY_MEMORY_MODULE, "block/item/read_only_memory_module");
+        itemModule(itemModels, Items.REDSTONE_MODULE, "block/item/redstone_module");
+        itemModule(itemModels, Items.SEQUENCER_MODULE, "block/item/sequencer_module");
         itemModule(itemModels, Items.SERIAL_PORT_MODULE, "block/overlay/serial_port_module");
-        itemModule(itemModels, Items.STACK_MODULE, "item/stack_module");
-        itemModule(itemModels, Items.TERMINAL_MODULE, "item/terminal_module");
-        itemModule(itemModels, Items.TIMER_MODULE, "item/timer_module");
+        itemModule(itemModels, Items.STACK_MODULE, "block/item/stack_module");
+        itemModule(itemModels, Items.TERMINAL_MODULE, "block/item/terminal_module");
+        itemModule(itemModels, Items.TIMER_MODULE, "block/item/timer_module");
     }
 
     private <T extends Item> void simpleItem(ItemModelGenerators models, final DeferredHolder<Item, T> item) {
@@ -112,15 +112,15 @@ public final class ModModelProvider extends ModelProvider {
         for (final var e : CasingBlock.FACE_TO_PROPERTY.entrySet()) {
             var face = e.getKey();
             final Direction direction = Face.toDirection(face);
-            Quadrant rotationY = Quadrant.R0;
+            Quadrant rotationY = Quadrant.R180;
             Quadrant rotationX = Quadrant.R0;
 
             switch (direction) {
                 case UP -> rotationX = Quadrant.R90;
                 case DOWN -> rotationX = Quadrant.R270;
-                case EAST -> rotationY = Quadrant.R90;
-                case SOUTH -> rotationY = Quadrant.R180;
-                case WEST -> rotationY = Quadrant.R270;
+                case EAST -> rotationY = Quadrant.R270;
+                case SOUTH -> rotationY = Quadrant.R0;
+                case WEST -> rotationY = Quadrant.R90;
             }
             Variant variant = new Variant(EMPTY_CASING_MODEL)
                 .withXRot(rotationX)

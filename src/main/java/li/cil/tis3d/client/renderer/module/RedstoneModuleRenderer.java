@@ -3,7 +3,7 @@ package li.cil.tis3d.client.renderer.module;
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.RedstoneModule;
 import li.cil.tis3d.util.Color;
@@ -25,7 +25,7 @@ public class RedstoneModuleRenderer extends AbstractModuleWithRotationRenderer<R
     }
 
     @Override
-    public void render(final RedstoneModule module, final RenderContext context) {
+    public void render(final RedstoneModule module, final ModuleRenderContext context) {
         if (!module.getCasing().isEnabled()) {
             return;
         }

@@ -2,6 +2,7 @@ package li.cil.tis3d.util;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.Optional;
 
@@ -14,7 +15,7 @@ public final class EnumUtils {
 
     public static <T extends Enum<T>> T load(final Class<T> clazz, final String tagName, final CompoundTag tag) {
         //TODO
-        return null;
+        return clazz.getEnumConstants()[0];
     }
 
     public static <T extends Enum<T>> Optional<T> load(final Class<T> clazz, final String tagName, final ValueInput input) {
@@ -28,6 +29,10 @@ public final class EnumUtils {
     // --------------------------------------------------------------------- //
 
     public static <T extends Enum<T>> void save(final Enum<T> value, final String tagName, final CompoundTag tag) {
-        tag.putByte(tagName, (byte) value.ordinal());
+        tag.putByte(tagName, (byte) value.ordinal()); //TODO
+    }
+
+    public static <T extends Enum<T>> void save(final Enum<T> value, final String tagName, final ValueOutput output) {
+        output.putByte(tagName, (byte) value.ordinal());
     }
 }

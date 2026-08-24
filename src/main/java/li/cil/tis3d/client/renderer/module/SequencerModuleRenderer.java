@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
-import li.cil.tis3d.api.util.RenderContext;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.module.SequencerModule;
 import li.cil.tis3d.util.Color;
@@ -37,7 +37,7 @@ public class SequencerModuleRenderer extends AbstractModuleWithRotationRenderer<
     }
 
     @Override
-    public void render(final SequencerModule module, final RenderContext context) {
+    public void render(final SequencerModule module, final ModuleRenderContext context) {
         if (!module.isVisible()) {
             return;
         }
@@ -61,7 +61,7 @@ public class SequencerModuleRenderer extends AbstractModuleWithRotationRenderer<
         // Draw base grid of sequencer entries.
         context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_SEQUENCER, Color.withAlpha(Color.WHITE, enabled ? 1f : 0.5f));
 
-        if (context.closeEnoughForDetails(casing.getPosition())) {
+        if (context.closeEnoughForDetails()) {
             // Draw configuration of sequencer.
             final int color = Color.withAlpha(ACTIVE_CELL_COLOR, enabled ? 1f : 0.5f);
             for (int col = 0; col < SequencerModule.COL_COUNT; col++) {

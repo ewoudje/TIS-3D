@@ -3,6 +3,7 @@ package li.cil.tis3d.client;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.prefab.module.AbstractModule;
 import li.cil.tis3d.client.gui.TerminalModuleScreen;
+import li.cil.tis3d.client.renderer.ModRenderPipelines;
 import li.cil.tis3d.client.renderer.block.entity.CasingBlockEntityRenderer;
 import li.cil.tis3d.client.renderer.block.entity.ControllerBlockEntityRenderer;
 import li.cil.tis3d.client.renderer.block.ModuleModelLoader;
