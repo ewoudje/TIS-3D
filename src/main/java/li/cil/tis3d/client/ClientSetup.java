@@ -1,6 +1,7 @@
 package li.cil.tis3d.client;
 
 import li.cil.tis3d.api.API;
+import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.prefab.module.AbstractModule;
 import li.cil.tis3d.client.gui.TerminalModuleScreen;
 import li.cil.tis3d.client.renderer.ModRenderPipelines;
@@ -10,7 +11,6 @@ import li.cil.tis3d.client.renderer.block.ModuleModelLoader;
 import li.cil.tis3d.client.renderer.font.NormalFontRenderer;
 import li.cil.tis3d.client.renderer.font.SmallFontRenderer;
 import li.cil.tis3d.common.block.entity.BlockEntities;
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -19,15 +19,10 @@ import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-
-/**
- * Takes care of client-side only setup.
- */
-@ClientSided
 public final class ClientSetup {
     public static void setup(final FMLClientSetupEvent ignoredEvent) {
-        API.normalFontRenderer = NormalFontRenderer.INSTANCE;
-        API.smallFontRenderer = SmallFontRenderer.INSTANCE;
+        ClientAPI.normalFontRenderer = NormalFontRenderer.INSTANCE;
+        ClientAPI.smallFontRenderer = SmallFontRenderer.INSTANCE;
 
         BlockEntityRenderers.register(BlockEntities.CASING.get(), CasingBlockEntityRenderer::new);
         BlockEntityRenderers.register(BlockEntities.CONTROLLER.get(), ControllerBlockEntityRenderer::new);

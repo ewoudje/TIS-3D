@@ -3,6 +3,7 @@ package li.cil.tis3d.common.item;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import li.cil.tis3d.client.gui.CodeBookScreen;
+import li.cil.tis3d.client.gui.ModScreens;
 import li.cil.tis3d.common.block.CasingBlock;
 import li.cil.tis3d.common.config.Constants;
 import net.minecraft.client.Minecraft;
@@ -38,7 +39,7 @@ public final class CodeBookItem extends ModItem {
     @Override
     public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
         if (level.isClientSide()) {
-            openScreen(player, hand);
+            ModScreens.openCodeBook(player, hand);
             return InteractionResult.CONSUME;
         }
 
@@ -48,13 +49,6 @@ public final class CodeBookItem extends ModItem {
     @Override
     public InteractionResult useOn(final UseOnContext context) {
         return CasingBlock.useIfCasing(context).orElseGet(() -> super.useOn(context));
-    }
-
-    // --------------------------------------------------------------------- //
-
-    @OnlyIn(Dist.CLIENT)
-    private void openScreen(final Player player, final InteractionHand hand) {
-        Minecraft.getInstance().setScreen(new CodeBookScreen(player, hand));
     }
 
     // --------------------------------------------------------------------- //
@@ -232,8 +226,6 @@ public final class CodeBookItem extends ModItem {
             setSelectedPage(pages.size() - newPages.size());
         }
 
-        // --------------------------------------------------------------------- //
-
         /**
          * Overwrite a page at the specified index.
          *
@@ -270,8 +262,6 @@ public final class CodeBookItem extends ModItem {
             return program;
         }
 
-        // --------------------------------------------------------------------- //
-
         /**
          * Get the leading and trailing code lines of a program spanning the specified
          * page, taking into account the <code>#BWTM</code> preprocessor marco. This
@@ -304,6 +294,8 @@ public final class CodeBookItem extends ModItem {
             }
         }
 
+        // --------------------------------------------------------------------- //
+
         private void validateSelectedPage() {
             selectedPage = Math.max(0, Math.min(pages.size() - 1, selectedPage));
         }
@@ -319,6 +311,7 @@ public final class CodeBookItem extends ModItem {
 
             return true;
         }
+
         // --------------------------------------------------------------------- //
 
         public Data toImmutable() {

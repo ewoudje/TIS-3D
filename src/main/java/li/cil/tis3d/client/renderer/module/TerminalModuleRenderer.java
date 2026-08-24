@@ -3,6 +3,7 @@ package li.cil.tis3d.client.renderer.module;
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
+import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
@@ -45,7 +46,7 @@ public class TerminalModuleRenderer extends AbstractModuleWithRotationRenderer<T
         matrixStack.translate(2f / 16f, 2f / 16f, 0);
         matrixStack.scale(1 / 512f, 1 / 512f, 1);
 
-        final var fontRenderer = API.normalFontRenderer;
+        final var fontRenderer = ClientAPI.normalFontRenderer;
         final var display = module.getDisplay();
 
         final int totalWidth = 12 * 32;

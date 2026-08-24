@@ -1,6 +1,5 @@
 package li.cil.tis3d.api.module.traits;
 
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
@@ -33,6 +32,7 @@ public interface ModuleWithBakedModel {
      *
      * @return whether this module has a model.
      */
+    @OnlyIn(Dist.CLIENT)
     default boolean hasModel() {
         return true;
     }
@@ -48,7 +48,6 @@ public interface ModuleWithBakedModel {
      * @param tintIndex the tint index to resolve.
      * @return the color for the specified tint index, if possible.
      */
-    @ClientSided
     default OptionalInt getTintColor(@Nullable final BlockAndTintGetter level, @Nullable final BlockPos pos, final int tintIndex) {
         return OptionalInt.empty();
     }
@@ -64,7 +63,6 @@ public interface ModuleWithBakedModel {
      * @param data  the incoming model data to wrap/expand.
      * @return model data needed for rendering.
      */
-    @OnlyIn(Dist.CLIENT)
     default ModelData getModelData(final BlockAndTintGetter level, final BlockPos pos, final BlockState state, final ModelData data) {
         return data;
     }
@@ -80,16 +78,5 @@ public interface ModuleWithBakedModel {
      * @param renderType the render type.
      * @return the list of replacement quads, or <c>null</c> to use the default casing quads.
      */
-    @OnlyIn(Dist.CLIENT)
     List<BakedQuad> getQuads(final @Nullable BlockState state, @Nullable final Direction face, final RandomSource random, final ModelData data, @Nullable final RenderType renderType);
-
-    /**
-     * Returns the render types required by the underlying model.
-     *
-     * @param random the random seed to use for the quad generation.
-     * @param data   the model data for the underlying model.
-     * @return the render layers needed by the underlying model.
-     */
-    //TODO @OnlyIn(Dist.CLIENT)
-    //TODO ChunkRenderTypeSet getRenderTypes(final RandomSource random, final ModelData data);
 }

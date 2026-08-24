@@ -10,6 +10,7 @@ import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
 import li.cil.tis3d.client.gui.TerminalModuleScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import li.cil.tis3d.client.gui.ModScreens;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -19,8 +20,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -56,6 +55,7 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
     // For short<->char conversion when reading/writing from/to ports.
     private static final Charset CP437 = Charset.forName("Cp437");
+
     /**
      * Current displayed text, line by line.
      * <p>
@@ -118,9 +118,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         }
     }
 
-    // --------------------------------------------------------------------- //
-    // Module
-
     private static void tab(final StringBuilder line) {
         if (line.length() < MAX_COLUMNS) {
             do {
@@ -148,6 +145,9 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         return isInputEnabled;
     }
 
+    // --------------------------------------------------------------------- //
+    // Module
+
     @Override
     public void step() {
         stepOutput();
@@ -166,8 +166,7 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     public void onDisposed() {
         super.onDisposed();
         if (getCasing().getCasingLevel().isClientSide()) {
-            //noinspection MethodCallSideOnly Guarded by isClient check.
-            closeGui();
+            ModScreens.closeTerminal(this);
         }
     }
 
@@ -191,8 +190,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         // written once.
         cancelWrite();
     }
-
-    // --------------------------------------------------------------------- //
 
     @Override
     public void onWriteComplete(final Port port) {
@@ -222,14 +219,11 @@ public final class TerminalModule extends AbstractModuleWithRotation {
 
         final Level level = player.level();
         if (level.isClientSide()) {
-            openScreen();
+            ModScreens.openTerminal(this);
         }
 
         return true;
     }
-
-    // --------------------------------------------------------------------- //
-    // Rendering
 
     @Override
     public void onData(final ByteBuf data) {
@@ -277,9 +271,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         isInputEnabled = output.isEmpty();
     }
 
-    // --------------------------------------------------------------------- //
-    // Networking
-
     @Override
     public void save(final CompoundTag tag) {
         super.save(tag);
@@ -292,6 +283,8 @@ public final class TerminalModule extends AbstractModuleWithRotation {
 
         tag.putString(TAG_OUTPUT, output.toString());
     }
+
+    // --------------------------------------------------------------------- //
 
     private void stepInput() {
         for (final Port port : Port.VALUES) {
@@ -320,24 +313,8 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private void openScreen() {
-        Minecraft.getInstance().setScreen(new TerminalModuleScreen(this));
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private void closeGui() {
-        final Minecraft mc = Minecraft.getInstance();
-        final Screen screen = mc.screen;
-        if (screen instanceof final TerminalModuleScreen gui) {
-            if (gui.isFor(this)) {
-                gui.onClose();
-            }
-        }
-    }
-
     // --------------------------------------------------------------------- //
-    // Input processing
+    // Networking
 
     private void sendInputEnabled(final boolean value) {
         final ByteBuf response = Unpooled.buffer();
@@ -359,6 +336,9 @@ public final class TerminalModule extends AbstractModuleWithRotation {
         writeString(data, input.toString());
         getCasing().sendData(getFace(), data, DATA_TYPE_INPUT);
     }
+
+    // --------------------------------------------------------------------- //
+    // Input processing
 
     private char toChar(final short value) {
         byteBuffer.clear();

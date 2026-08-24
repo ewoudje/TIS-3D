@@ -20,8 +20,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -368,8 +366,10 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     // --------------------------------------------------------------------- //
     // Synchronization
 
-    @OnlyIn(Dist.CLIENT)
     public void setStateClient(final ControllerState state) {
+        if (level != null && !level.isClientSide)
+            throw new IllegalStateException("setStateClient should only be called on the client");
+
         this.state = state;
     }
 

@@ -1,7 +1,7 @@
 package li.cil.tis3d.common.item;
 
 import li.cil.tis3d.common.block.CasingBlock;
-import li.cil.tis3d.common.container.ReadOnlyMemoryModuleContainer;
+import li.cil.tis3d.common.container.ReadOnlyMemoryModuleMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -60,7 +60,7 @@ public final class ReadOnlyMemoryModuleItem extends ModuleItem {
 
                 @Override
                 public AbstractContainerMenu createMenu(final int id, final Inventory playerInventory, final Player player) {
-                    return new ReadOnlyMemoryModuleContainer(id, player, hand);
+                    return new ReadOnlyMemoryModuleMenu(id, player, hand);
                 }
             }, buffer -> buffer.writeEnum(hand));
         }

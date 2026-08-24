@@ -3,6 +3,7 @@ package li.cil.tis3d.client.renderer.module;
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
+import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
@@ -55,7 +56,7 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
             time = String.format("%.2f", seconds);
         }
 
-        final FontRenderer fontRenderer = API.normalFontRenderer;
+        final FontRenderer fontRenderer = ClientAPI.normalFontRenderer;
 
         final int width = fontRenderer.width(time);
         final int height = fontRenderer.lineHeight();
