@@ -1,8 +1,9 @@
 package li.cil.tis3d.client.gui;
 
 import li.cil.tis3d.api.API;
+import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.common.container.ReadOnlyMemoryModuleContainer;
+import li.cil.tis3d.common.container.ReadOnlyMemoryModuleMenu;
 import li.cil.tis3d.common.module.RandomAccessMemoryModule;
 import li.cil.tis3d.common.network.Network;
 import li.cil.tis3d.common.network.message.ClientReadOnlyMemoryModuleDataMessage;
@@ -17,7 +18,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Objects;
 
-public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<ReadOnlyMemoryModuleContainer> {
+public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<ReadOnlyMemoryModuleMenu> {
     private static final int GRID_LEFT = 25;
     private static final int GRID_TOP = 13;
     private static final int CELL_WIDTH = 10;
@@ -31,7 +32,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
     private boolean receivedData;
     private long initTime;
 
-    public ReadOnlyMemoryModuleScreen(final ReadOnlyMemoryModuleContainer container, final Inventory playerInventory, final Component title) {
+    public ReadOnlyMemoryModuleScreen(final ReadOnlyMemoryModuleMenu container, final Inventory playerInventory, final Component title) {
         super(container, playerInventory, title);
 
         imageWidth = 190;
@@ -213,7 +214,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         matrixStack.pushPose();
         matrixStack.translate(leftPos + GRID_LEFT + 3, topPos + 6, 0);
         for (int col = 0; col < 16; col++) {
-            API.smallFontRenderer.drawInBatch(String.format("%X", col), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
+            ClientAPI.smallFontRenderer.drawInBatch(String.format("%X", col), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
             matrixStack.translate(CELL_WIDTH, 0, 0);
         }
         matrixStack.popPose();
@@ -222,7 +223,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         matrixStack.pushPose();
         matrixStack.translate(leftPos + 7, topPos + 14, 0);
         for (int row = 0; row < 16; row++) {
-            API.smallFontRenderer.drawInBatch(String.format("0X%X0", row), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
+            ClientAPI.smallFontRenderer.drawInBatch(String.format("0X%X0", row), Color.GUI_TEXT, matrixStack.last().pose(), buffer);
             matrixStack.translate(0, CELL_HEIGHT, 0);
         }
         matrixStack.popPose();
@@ -237,12 +238,12 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         final float alpha = 1 - sinceInitialized / 0.5f;
         final int color = Color.withAlpha(Color.WHITE, alpha);
 
-        final int labelWidth = API.smallFontRenderer.width(LABEL_INITIALIZING);
+        final int labelWidth = ClientAPI.smallFontRenderer.width(LABEL_INITIALIZING);
 
         final var matrixStack = graphics.pose();
         matrixStack.pushPose();
         matrixStack.translate((float) (leftPos + GRID_LEFT + 3 + 7 * CELL_WIDTH - labelWidth / 2), topPos + GRID_TOP + 1 + 7 * CELL_HEIGHT, 0);
-        API.smallFontRenderer.drawInBatch(LABEL_INITIALIZING, color, matrixStack.last().pose(), buffer);
+        ClientAPI.smallFontRenderer.drawInBatch(LABEL_INITIALIZING, color, matrixStack.last().pose(), buffer);
         matrixStack.popPose();
     }
 
@@ -272,7 +273,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
             final float brightness = (float) Math.min(1, Math.max(0.8, 1 - distance / 32));
             final int color = Color.monochrome(brightness);
 
-            API.smallFontRenderer.drawInBatch(String.format("%02X", data[i]), color, matrixStack.last().pose(), buffer);
+            ClientAPI.smallFontRenderer.drawInBatch(String.format("%02X", data[i]), color, matrixStack.last().pose(), buffer);
 
             if (col < 0x0F) {
                 matrixStack.translate(CELL_WIDTH, 0, 0);

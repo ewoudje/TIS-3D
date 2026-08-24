@@ -1,6 +1,5 @@
 package li.cil.tis3d.api.module.traits;
 
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
@@ -34,6 +33,7 @@ public interface ModuleWithBakedModel {
      *
      * @return whether this module has a model.
      */
+    @OnlyIn(Dist.CLIENT)
     default boolean hasModel() {
         return true;
     }
@@ -49,7 +49,7 @@ public interface ModuleWithBakedModel {
      * @param tintIndex the tint index to resolve.
      * @return the color for the specified tint index, if possible.
      */
-    @ClientSided
+    @OnlyIn(Dist.CLIENT)
     default OptionalInt getTintColor(@Nullable final BlockAndTintGetter level, @Nullable final BlockPos pos, final int tintIndex) {
         return OptionalInt.empty();
     }

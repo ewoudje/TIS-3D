@@ -8,14 +8,14 @@ import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-public final class Containers {
+public final class ModMenus {
     private static final DeferredRegister<MenuType<?>> MENU_TYPES = RegistryUtils.getDeferred(Registries.MENU);
 
     // --------------------------------------------------------------------- //
 
-    public static final DeferredHolder<MenuType<?>, MenuType<ReadOnlyMemoryModuleContainer>> READ_ONLY_MEMORY_MODULE = MENU_TYPES.register(
+    public static final DeferredHolder<MenuType<?>, MenuType<ReadOnlyMemoryModuleMenu>> READ_ONLY_MEMORY_MODULE = MENU_TYPES.register(
         "read_only_memory_module",
-        () -> IMenuTypeExtension.create(ReadOnlyMemoryModuleContainer::create)
+        () -> IMenuTypeExtension.create(ReadOnlyMemoryModuleMenu::create)
     );
 
     // --------------------------------------------------------------------- //

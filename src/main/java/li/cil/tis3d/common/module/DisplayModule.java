@@ -11,21 +11,10 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.ModRenderType;
 import li.cil.tis3d.client.renderer.module.DisplayModuleRenderer;
 import li.cil.tis3d.util.Color;
 import li.cil.tis3d.util.EnumUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor.ABGR32;
-import net.minecraft.util.FastColor.ARGB32;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Arrays;
 

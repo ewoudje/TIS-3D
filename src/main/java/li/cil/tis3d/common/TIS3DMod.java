@@ -9,7 +9,7 @@ import li.cil.tis3d.common.api.InfraredAPIImpl;
 import li.cil.tis3d.common.block.Blocks;
 import li.cil.tis3d.common.block.entity.BlockEntities;
 import li.cil.tis3d.common.config.CommonConfig;
-import li.cil.tis3d.common.container.Containers;
+import li.cil.tis3d.common.container.ModMenus;
 import li.cil.tis3d.common.entity.Entities;
 import li.cil.tis3d.common.event.InfraredPacketTickHandler;
 import li.cil.tis3d.common.item.DataComponentTypes;
@@ -53,7 +53,7 @@ public final class TIS3DMod {
         Items.initialize(bus);
         BlockEntities.initialize(bus);
         Entities.initialize(bus);
-        Containers.initialize(bus);
+        ModMenus.initialize(bus);
 
         ModuleProviders.initialize(bus);
         SerialInterfaceProviders.initialize(bus);

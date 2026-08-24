@@ -1,21 +1,13 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
 import net.minecraft.nbt.CompoundTag;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 /**
  * The timer module can be used to wait for a specific amount of game time.

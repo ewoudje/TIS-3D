@@ -5,12 +5,8 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModule;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public final class RandomModule extends AbstractModule {
     public RandomModule(final Casing casing, final Face face) {

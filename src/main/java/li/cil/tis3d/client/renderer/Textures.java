@@ -1,10 +1,8 @@
 package li.cil.tis3d.client.renderer;
 
 import li.cil.tis3d.api.API;
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.resources.ResourceLocation;
 
-@ClientSided
 public final class Textures {
     public static final ResourceLocation LOCATION_GUI_BOOK_CODE_BACKGROUND = API.resource("textures/gui/code_book.png");
     public static final ResourceLocation LOCATION_GUI_MANUAL_BACKGROUND = API.resource("textures/gui/manual.png");

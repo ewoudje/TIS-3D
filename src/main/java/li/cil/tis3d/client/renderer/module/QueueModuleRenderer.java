@@ -3,6 +3,7 @@ package li.cil.tis3d.client.renderer.module;
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
+import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.RenderContext;
@@ -41,7 +42,7 @@ public class QueueModuleRenderer extends AbstractModuleWithRotationRenderer<Queu
         matrixStack.scale(1 / 128f, 1 / 128f, 1);
         matrixStack.translate(4.5f, 14.5f, 0);
 
-        final FontRenderer fontRenderer = API.smallFontRenderer;
+        final FontRenderer fontRenderer = ClientAPI.smallFontRenderer;
         for (int i = module.getTail(), j = 0; i != module.getHead(); i = (i + 1) % QueueModule.QUEUE_SIZE, j++) {
             context.drawString(fontRenderer, String.format("%4X", module.getAt(i)), Color.WHITE);
             matrixStack.translate(0, fontRenderer.lineHeight() + 1, 0);

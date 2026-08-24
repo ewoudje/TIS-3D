@@ -3,6 +3,7 @@ package li.cil.tis3d.client.renderer.module;
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.manual.api.render.FontRenderer;
 import li.cil.tis3d.api.API;
+import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.RenderContext;
@@ -56,7 +57,7 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
         matrixStack.scale(1 / 128f, 1 / 128f, 1);
         matrixStack.translate(1, 1, 0);
 
-        final FontRenderer fontRenderer = API.smallFontRenderer;
+        final FontRenderer fontRenderer = ClientAPI.smallFontRenderer;
 
         // Draw register info on top.
         final String accLast = String.format("ACC:%4X LAST:%s", machineState.acc, machineState.last.map(Enum::name).orElse("NONE"));

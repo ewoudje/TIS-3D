@@ -452,8 +452,10 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      *
      * @param locked the new locked state of the case.
      */
-    @OnlyIn(Dist.CLIENT)
     public void setCasingLockedClient(final boolean locked) {
+        if (level != null && !level.isClientSide)
+            throw new IllegalStateException("setCasingLockedClient should only be called on the client");
+
         casing.setLocked(locked);
     }
 
@@ -466,8 +468,10 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param stack      the new item stack in that slot, if any.
      * @param moduleData the original state of the module on the server, if present.
      */
-    @OnlyIn(Dist.CLIENT)
     public void setStackAndModuleClient(final int slot, final ItemStack stack, final CompoundTag moduleData) {
+        if (level != null && !level.isClientSide)
+            throw new IllegalStateException("setStackAndModuleClient should only be called on the client");
+
         inventory.setItem(slot, stack);
         final Module module = casing.getModule(Face.VALUES[slot]);
         if (module != null) {
@@ -481,8 +485,10 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      *
      * @param value the new enabled state of this casing.
      */
-    @OnlyIn(Dist.CLIENT)
     public void setEnabledClient(final boolean value) {
+        if (level != null && !level.isClientSide)
+            throw new IllegalStateException("setEnabledClient should only be called on the client");
+
         isEnabled = value;
     }
 
@@ -494,8 +500,10 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param port  the port to set the locked state of.
      * @param value the new enabled state of this casing.
      */
-    @OnlyIn(Dist.CLIENT)
     public void setReceivingPipeLockedClient(final Face face, final Port port, final boolean value) {
+        if (level != null && !level.isClientSide)
+            throw new IllegalStateException("setReceivingPipeLockedClient should only be called on the client");
+
         locked[face.ordinal()][port.ordinal()] = value;
     }
 

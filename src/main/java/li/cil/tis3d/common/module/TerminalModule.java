@@ -1,21 +1,13 @@
 package li.cil.tis3d.common.module;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.gui.TerminalModuleScreen;
-import li.cil.tis3d.client.renderer.Textures;
-import li.cil.tis3d.util.Color;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
+import li.cil.tis3d.client.gui.ModScreens;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -26,8 +18,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -144,8 +134,7 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     public void onDisposed() {
         super.onDisposed();
         if (getCasing().getCasingLevel().isClientSide()) {
-            //noinspection MethodCallSideOnly Guarded by isClient check.
-            closeGui();
+            ModScreens.closeTerminal(this);
         }
     }
 
@@ -198,7 +187,7 @@ public final class TerminalModule extends AbstractModuleWithRotation {
 
         final Level level = player.level();
         if (level.isClientSide()) {
-            openScreen();
+            ModScreens.openTerminal(this);
         }
 
         return true;
@@ -288,25 +277,6 @@ public final class TerminalModule extends AbstractModuleWithRotation {
                 if (!sendingPipe.isWriting()) {
                     sendingPipe.beginWrite(toShort(peekChar()));
                 }
-            }
-        }
-    }
-
-    // --------------------------------------------------------------------- //
-    // Rendering
-
-    @OnlyIn(Dist.CLIENT)
-    private void openScreen() {
-        Minecraft.getInstance().setScreen(new TerminalModuleScreen(this));
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private void closeGui() {
-        final Minecraft mc = Minecraft.getInstance();
-        final Screen screen = mc.screen;
-        if (screen instanceof final TerminalModuleScreen gui) {
-            if (gui.isFor(this)) {
-                gui.onClose();
             }
         }
     }

@@ -1,7 +1,5 @@
 package li.cil.tis3d.api;
 
-import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 
@@ -21,11 +19,6 @@ public final class API {
     // Set in TIS-3D constructor, prefer using static entry point classes instead where possible.
     public static Supplier<CreativeModeTab> itemGroup;
     public static li.cil.tis3d.api.detail.InfraredAPI infraredAPI;
-
-    @ClientSided
-    public static FontRenderer normalFontRenderer;
-    @ClientSided
-    public static FontRenderer smallFontRenderer;
 
     public static ResourceLocation resource(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);

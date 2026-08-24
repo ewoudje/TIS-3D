@@ -8,8 +8,6 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModule;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.config.CommonConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,8 +16,6 @@ import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Deque;
 import java.util.LinkedList;

@@ -4,8 +4,6 @@ import io.netty.buffer.ByteBuf;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Port;
-import li.cil.tis3d.api.util.RenderContext;
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
