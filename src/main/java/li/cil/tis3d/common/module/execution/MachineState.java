@@ -9,6 +9,7 @@ import li.cil.tis3d.common.module.execution.instruction.Instruction;
 import li.cil.tis3d.util.EnumUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -137,15 +138,15 @@ public final class MachineState {
         pcPrev = input.getIntOr(TAG_PC_PREV, 0);
     }
 
-    public void save(final CompoundTag tag) {
-        tag.putInt(TAG_PC, pc);
-        tag.putShort(TAG_ACC, acc);
-        tag.putShort(TAG_BAK, bak);
-        last.ifPresent(port -> EnumUtils.save(port, TAG_LAST, tag));
-        tag.putInt(TAG_PC_PREV, pcPrev);
+    public void save(final ValueOutput output) {
+        output.putInt(TAG_PC, pc);
+        output.putShort(TAG_ACC, acc);
+        output.putShort(TAG_BAK, bak);
+        last.ifPresent(port -> EnumUtils.save(port, TAG_LAST, output));
+        output.putInt(TAG_PC_PREV, pcPrev);
 
         if (code != null) {
-            tag.putString(TAG_CODE, String.join("\n", code));
+            output.putString(TAG_CODE, String.join("\n", code));
         }
     }
 }

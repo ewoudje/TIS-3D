@@ -9,6 +9,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import static java.util.Objects.requireNonNull;
@@ -44,7 +46,9 @@ public final class ServerCasingInitializeMessage extends AbstractMessageWithPosi
                     final var moduleTag = tag.getCompoundOrEmpty(i);
                     final var module = casing.getModule(face);
                     if (module != null) {
-                        module.load(moduleTag);
+                        try (var reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
+                            module.load(TagValueInput.create(reporter, level.registryAccess(), moduleTag));
+                        }
                     }
                 }
             });

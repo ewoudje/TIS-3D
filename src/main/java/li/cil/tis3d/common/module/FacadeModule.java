@@ -26,9 +26,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.model.data.ModelData;
 
 import javax.annotation.Nullable;
@@ -82,7 +83,7 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     }
 
     @Override
-    public void onData(final CompoundTag data) {
+    public void onData(final ValueInput data) {
         load(data);
 
         // Force re-render to make change of facade configuration visible.
@@ -97,22 +98,20 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     }
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput input) {
+        super.load(input);
 
-        facadeState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK, tag.getCompoundOrEmpty(TAG_STATE));
+        facadeState = input.read(TAG_STATE, BlockState.CODEC).orElse(null);
         if (facadeState == Blocks.AIR.defaultBlockState()) {
             facadeState = null;
         }
     }
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput output) {
+        super.save(output);
 
-        if (facadeState != null) {
-            tag.put(TAG_STATE, NbtUtils.writeBlockState(facadeState));
-        }
+        output.storeNullable(TAG_STATE, BlockState.CODEC, facadeState);
     }
 
     // --------------------------------------------------------------------- //
@@ -139,7 +138,6 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
         return facadeState != null;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public OptionalInt getTintColor(@Nullable final BlockAndTintGetter level, @Nullable final BlockPos pos, final int tintIndex) {
         return OptionalInt.of(Minecraft.getInstance().getBlockColors().getColor(facadeState, level, pos, tintIndex));
@@ -186,8 +184,6 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     }
 
     private void sendState() {
-        final CompoundTag tag = new CompoundTag();
-        save(tag);
-        getCasing().sendData(getFace(), tag, DATA_TYPE_FULL);
+        getCasing().sendData(getFace(), this::save, DATA_TYPE_FULL);
     }
 }

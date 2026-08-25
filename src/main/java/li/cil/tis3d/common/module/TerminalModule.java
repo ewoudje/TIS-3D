@@ -1,5 +1,6 @@
 package li.cil.tis3d.common.module;
 
+import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import li.cil.tis3d.api.machine.Casing;
@@ -19,6 +20,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import java.nio.ByteBuffer;
@@ -257,31 +260,32 @@ public final class TerminalModule extends AbstractModuleWithRotation {
     }
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput input) {
+        super.load(input);
 
-        final ListTag lines = tag.getListOrEmpty(TAG_DISPLAY);
+        var lst = input.list(TAG_DISPLAY, Codec.STRING);
         display.clear();
-        for (int tagIndex = 0; tagIndex < lines.size(); tagIndex++) {
-            display.add(new StringBuilder(lines.getString(tagIndex).orElseThrow()));
+        if (lst.isPresent()) {
+            for (final String line : lst.get()) {
+                display.add(new StringBuilder(line));
+            }
         }
 
         output.setLength(0);
-        output.append(tag.getString(TAG_OUTPUT));
+        output.append(input.getString(TAG_OUTPUT));
         isInputEnabled = output.isEmpty();
     }
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput output) {
+        super.save(output);
 
-        final ListTag lines = new ListTag();
+        var list = output.list(TAG_DISPLAY, Codec.STRING);
         for (final StringBuilder line : display) {
-            lines.add(StringTag.valueOf(line.toString()));
+            list.add(line.toString());
         }
-        tag.put(TAG_DISPLAY, lines);
 
-        tag.putString(TAG_OUTPUT, output.toString());
+        output.putString(TAG_OUTPUT, output.toString());
     }
 
     // --------------------------------------------------------------------- //

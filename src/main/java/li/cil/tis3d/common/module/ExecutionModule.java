@@ -26,6 +26,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.WritableBookContent;
 import net.minecraft.world.item.component.WrittenBookContent;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -208,7 +210,7 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
     }
 
     @Override
-    public void onData(final CompoundTag data) {
+    public void onData(final ValueInput data) {
         this.load(data);
     }
 
@@ -230,12 +232,13 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
     // BlockChangeAware
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput input) {
+        super.load(input);
 
-        final CompoundTag machineTag = tag.getCompoundOrEmpty(TAG_MACHINE);
-        //TODO getState().load(machineTag);
-        executionState = EnumUtils.load(ExecutionState.class, TAG_STATE, tag);
+        getState().load(input.childOrEmpty(TAG_MACHINE));
+
+        executionState = EnumUtils.load(ExecutionState.class, TAG_STATE, input)
+            .orElse(ExecutionState.IDLE);
 
         if (getState().code != null) {
             compile(Arrays.asList(getState().code));
@@ -245,13 +248,11 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
     // --------------------------------------------------------------------- //
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput output) {
+        super.save(output);
 
-        final CompoundTag machineTag = new CompoundTag();
-        getState().save(machineTag);
-        tag.put(TAG_MACHINE, machineTag);
-        EnumUtils.save(executionState, TAG_STATE, tag);
+        getState().save(output.child(TAG_MACHINE));
+        EnumUtils.save(executionState, TAG_STATE, output);
     }
 
     @Override
@@ -284,9 +285,7 @@ public final class ExecutionModule extends AbstractModuleWithRotation implements
      * Send the full state to the client.
      */
     private void sendFullState() {
-        final CompoundTag tag = new CompoundTag();
-        this.save(tag);
-        getCasing().sendData(getFace(), tag, DATA_TYPE_FULL);
+        getCasing().sendData(getFace(), this::save, DATA_TYPE_FULL);
     }
 
     /**

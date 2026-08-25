@@ -7,9 +7,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 /**
  * A casing for TIS-3D modules.
@@ -155,6 +157,9 @@ public interface Casing {
      * @param data the data to send to the client.
      */
     void sendData(final Face face, final CompoundTag data);
+
+    void sendData(final Face face, final Consumer<ValueOutput> data);
+    void sendData(final Face face, final Consumer<ValueOutput> data, final byte type);
 
     /**
      * Call this to send some data from a module to it's other representation.

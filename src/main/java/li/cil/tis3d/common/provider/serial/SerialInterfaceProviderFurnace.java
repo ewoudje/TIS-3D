@@ -10,6 +10,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -104,12 +106,12 @@ public final class SerialInterfaceProviderFurnace implements SerialInterfaceProv
         }
 
         @Override
-        public void load(final CompoundTag tag) {
-            mode = EnumUtils.load(SerialInterfaceFurnace.Mode.class, TAG_MODE, tag);
+        public void load(final ValueInput tag) {
+            mode = EnumUtils.load(SerialInterfaceFurnace.Mode.class, TAG_MODE, tag).orElse(Mode.PercentageFuel);
         }
 
         @Override
-        public void save(final CompoundTag tag) {
+        public void save(final ValueOutput tag) {
             EnumUtils.save(mode, TAG_MODE, tag);
         }
 

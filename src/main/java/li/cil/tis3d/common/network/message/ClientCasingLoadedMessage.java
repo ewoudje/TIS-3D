@@ -10,6 +10,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public final class ClientCasingLoadedMessage extends AbstractMessageWithPosition {
@@ -38,11 +40,17 @@ public final class ClientCasingLoadedMessage extends AbstractMessageWithPosition
                 final var listTag = new ListTag();
                 for (var face : Face.VALUES) {
                     final var module = casing.getModule(face);
-                    final var moduleTag = new CompoundTag();
-                    if (module != null) {
-                        module.save(moduleTag);
+
+                    try (var reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
+                        final var output = TagValueOutput.createWithContext(reporter, level.registryAccess());
+
+                        if (module != null) {
+                            module.save(output);
+                        }
+
+                        listTag.add(output.buildResult());
                     }
-                    listTag.add(moduleTag);
+
                 }
                 Network.sendToPlayer(player, new ServerCasingInitializeMessage(casing, listTag));
             });

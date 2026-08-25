@@ -9,6 +9,8 @@ import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * The queue module can be used to store a number of values to be retrieved
@@ -105,31 +107,31 @@ public final class QueueModule extends AbstractModuleWithRotation {
     }
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput input) {
+        super.load(input);
 
-        final int[] queueTag = tag.getIntArray(TAG_QUEUE).orElse(new int[0]);
+        final int[] queueTag = input.getIntArray(TAG_QUEUE).orElse(new int[0]);
         final int count = Math.min(queueTag.length, queue.length);
         for (int i = 0; i < count; i++) {
             queue[i] = (short) queueTag[i];
         }
 
-        head = Mth.clamp(tag.getIntOr(TAG_HEAD, 0), 0, QUEUE_SIZE - 1);
-        tail = Mth.clamp(tag.getIntOr(TAG_TAIL, 0), 0, QUEUE_SIZE - 1);
+        head = Mth.clamp(input.getIntOr(TAG_HEAD, 0), 0, QUEUE_SIZE - 1);
+        tail = Mth.clamp(input.getIntOr(TAG_TAIL, 0), 0, QUEUE_SIZE - 1);
     }
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput output) {
+        super.save(output);
 
         final int[] queueTag = new int[queue.length];
         for (int i = 0; i < queue.length; i++) {
             queueTag[i] = queue[i];
         }
-        tag.putIntArray(TAG_QUEUE, queueTag);
+        output.putIntArray(TAG_QUEUE, queueTag);
 
-        tag.putInt(TAG_HEAD, head);
-        tag.putInt(TAG_TAIL, tail);
+        output.putInt(TAG_HEAD, head);
+        output.putInt(TAG_TAIL, tail);
     }
 
     // --------------------------------------------------------------------- //

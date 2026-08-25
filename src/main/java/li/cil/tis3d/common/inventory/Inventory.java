@@ -7,6 +7,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.Arrays;
 
@@ -24,24 +26,21 @@ public class Inventory implements Container {
 
     // --------------------------------------------------------------------- //
 
-    public void load(final CompoundTag tag, HolderLookup.Provider provider) {
-        final ListTag itemList = tag.getListOrEmpty(TAG_ITEMS);
-        final int count = Math.min(itemList.size(), items.length);
-        for (int index = 0; index < count; index++) {
-            //TODO items[index] = ItemStack.MAP_CODEC .parseOptional(provider, itemList.getCompound(index));
+    public void load(ValueInput input) {
+        final var itemList = input.list(TAG_ITEMS, ItemStack.OPTIONAL_CODEC);
+        if (itemList.isPresent()) {
+            var iter = itemList.get().iterator();
+            for (int index = 0; index < items.length && iter.hasNext(); index++) {
+                items[index] = iter.next();
+            }
         }
     }
 
-    public void save(final CompoundTag tag, HolderLookup.Provider provider) {
-        final ListTag itemList = new ListTag();
+    public void save(ValueOutput output) {
+        final var itemList = output.list(TAG_ITEMS, ItemStack.OPTIONAL_CODEC);
         for (final ItemStack stack : items) {
-            Tag stackTag = new CompoundTag();
-            if (stack != null && !stack.isEmpty()) {
-                //TODO stackTag = stack.save(provider, stackTag);
-            }
-            itemList.add(stackTag);
+            itemList.add(stack);
         }
-        tag.put(TAG_ITEMS, itemList);
     }
 
     // --------------------------------------------------------------------- //

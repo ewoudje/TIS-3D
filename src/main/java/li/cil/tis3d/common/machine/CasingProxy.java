@@ -9,8 +9,10 @@ import li.cil.tis3d.api.module.Module;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 public interface CasingProxy extends Casing {
     Casing getCasing();
@@ -68,6 +70,16 @@ public interface CasingProxy extends Casing {
 
     @Override
     default void sendData(final Face face, final ByteBuf data, final byte type) {
+        getCasing().sendData(face, data, type);
+    }
+
+    @Override
+    default void sendData(final Face face, final Consumer<ValueOutput> data) {
+        getCasing().sendData(face, data);
+    }
+
+    @Override
+    default void sendData(final Face face,final Consumer<ValueOutput> data, final byte type) {
         getCasing().sendData(face, data, type);
     }
 

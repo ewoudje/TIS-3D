@@ -1,6 +1,6 @@
 package li.cil.tis3d.api;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 
 import java.util.function.Supplier;

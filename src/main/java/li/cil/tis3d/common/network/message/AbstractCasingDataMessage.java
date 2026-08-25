@@ -10,7 +10,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.TagValueInput;
 
 import java.io.IOException;
 
@@ -38,10 +40,10 @@ public abstract class AbstractCasingDataMessage extends AbstractMessageWithPosit
                     final ByteBuf packet = moduleData.readBytes(moduleData.readUnsignedShort());
                     if (module != null) {
                         if (isCompoundTag) {
-                            try {
+                            try (var reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
                                 final ByteBufInputStream bis = new ByteBufInputStream(packet);
                                 final CompoundTag tag = NbtIo.readCompressed(bis, NbtAccounter.unlimitedHeap());
-                                module.onData(tag);
+                                module.onData(TagValueInput.create(reporter, level.registryAccess(), tag));
                             } catch (final IOException e) {
                                 LOGGER.warn("Invalid packet received.", e);
                             }

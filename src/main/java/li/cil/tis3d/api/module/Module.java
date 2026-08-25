@@ -8,6 +8,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -163,7 +165,7 @@ public interface Module {
      * @see Casing#sendData(Face, CompoundTag, byte)
      * @see Casing#sendData(Face, CompoundTag)
      */
-    void onData(final CompoundTag data);
+    void onData(final ValueInput data);
 
     /**
      * Called with data sent from the remote instance of the module.
@@ -185,12 +187,12 @@ public interface Module {
      *
      * @param tag the tag to load the state from.
      */
-    void load(final CompoundTag tag);
+    void load(final ValueInput tag);
 
     /**
      * Save the state of the module to the specified tag.
      *
      * @param tag the tag to save the state to.
      */
-    void save(final CompoundTag tag);
+    void save(final ValueOutput tag);
 }

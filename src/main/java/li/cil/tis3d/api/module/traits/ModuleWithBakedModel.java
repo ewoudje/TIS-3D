@@ -7,8 +7,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.model.data.ModelData;
 
 import javax.annotation.Nullable;
@@ -32,7 +30,6 @@ public interface ModuleWithBakedModel {
      *
      * @return whether this module has a model.
      */
-    @OnlyIn(Dist.CLIENT)
     default boolean hasModel() {
         return true;
     }

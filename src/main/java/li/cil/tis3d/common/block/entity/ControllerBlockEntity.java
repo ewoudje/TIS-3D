@@ -19,6 +19,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayDeque;
@@ -230,35 +232,35 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     }
 
     @Override
-    protected void loadServer(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadServer(tag, registries);
+    protected void loadServer(ValueInput input) {
+        super.loadServer(input);
 
-        hcfCooldown = tag.getIntOr(TAG_HCF_COOLDOWN, 0);
+        hcfCooldown = input.getIntOr(TAG_HCF_COOLDOWN, 0);
     }
 
     @Override
-    protected void saveServer(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveServer(tag, registries);
+    protected void saveServer(ValueOutput output) {
+        super.saveServer(output);
 
-        tag.putInt(TAG_HCF_COOLDOWN, hcfCooldown);
+        output.putInt(TAG_HCF_COOLDOWN, hcfCooldown);
     }
 
     @Override
-    protected void loadClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadClient(tag, registries);
+    protected void loadClient(ValueInput input) {
+        super.loadClient(input);
 
-        state = ControllerState.VALUES[tag.getByteOr(TAG_STATE, (byte) 0) & 0xFF];
+        state = ControllerState.VALUES[input.getByteOr(TAG_STATE, (byte) 0) & 0xFF];
+    }
+
+    @Override
+    protected void saveClient(ValueOutput output) {
+        super.saveClient(output);
+
+        output.putByte(TAG_STATE, (byte) state.ordinal());
     }
 
     // --------------------------------------------------------------------- //
     // Ticking
-
-    @Override
-    protected void saveClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.saveClient(tag, registries);
-
-        tag.putByte(TAG_STATE, (byte) state.ordinal());
-    }
 
     private void serverTick() {
         final Level level = getBlockEntityLevel();
@@ -367,7 +369,7 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
     // Synchronization
 
     public void setStateClient(final ControllerState state) {
-        if (level != null && !level.isClientSide)
+        if (level == null || !level.isClientSide())
             throw new IllegalStateException("setStateClient should only be called on the client");
 
         this.state = state;

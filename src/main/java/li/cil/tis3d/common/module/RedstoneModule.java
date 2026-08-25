@@ -11,6 +11,8 @@ import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public final class RedstoneModule extends AbstractModuleWithRotation implements ModuleWithRedstone {
     // --------------------------------------------------------------------- //
@@ -91,19 +93,19 @@ public final class RedstoneModule extends AbstractModuleWithRotation implements 
     }
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput input) {
+        super.load(input);
 
-        output = (short) Math.clamp(tag.getShortOr(TAG_OUTPUT, (short) 0), 0, 15);
-        input = (short) Math.clamp(tag.getShortOr(TAG_INPUT, (short) 0), 0, 15);
+        output = (short) Math.clamp(input.getShortOr(TAG_OUTPUT, (short) 0), 0, 15);
+        this.input = (short) Math.clamp(input.getShortOr(TAG_INPUT, (short) 0), 0, 15);
     }
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput output) {
+        super.save(output);
 
-        tag.putInt(TAG_OUTPUT, output);
-        tag.putInt(TAG_INPUT, input);
+        output.putInt(TAG_OUTPUT, this.output);
+        output.putInt(TAG_INPUT, input);
     }
 
     // --------------------------------------------------------------------- //

@@ -1,5 +1,6 @@
 package li.cil.tis3d.common.machine;
 
+import com.mojang.logging.LogUtils;
 import io.netty.buffer.ByteBuf;
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
@@ -15,19 +16,28 @@ import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.network.Network;
 import li.cil.tis3d.common.provider.ModuleProviders;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Implementation of a {@link Casing}, holding up to six {@link Module}s.
  */
 public final class CasingImpl implements Casing {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     // --------------------------------------------------------------------- //
     // Persisted data.
 
@@ -222,10 +232,8 @@ public final class CasingImpl implements Casing {
 
     /**
      * Restore data of all modules and pipes from the specified tag.
-     *
-     * @param tag the data to load.
      */
-    public void load(final CompoundTag tag) {
+    public void load(final ValueInput input) {
         for (int index = 0; index < blockEntity.getContainerSize(); index++) {
             // We replace *all* modules to be sure we have the right types in the right slots,
             // so make sure we dispose the old instances we may have, first.
@@ -250,41 +258,31 @@ public final class CasingImpl implements Casing {
             modules[index] = module;
         }
 
-        final ListTag modulesTag = tag.getListOrEmpty(TAG_MODULES);
-        final int moduleCount = Math.min(modulesTag.size(), modules.length);
-        for (int i = 0; i < moduleCount; i++) {
-            if (modules[i] != null) {
-                modules[i].load(modulesTag.getCompoundOrEmpty(i));
+        final var modulesData = input.childrenList(TAG_MODULES);
+        if (modulesData.isPresent()) {
+            var iter = modulesData.get().iterator();
+            for (Module module : modules) {
+                if (module != null && iter.hasNext()) {
+                    module.load(iter.next());
+                }
             }
         }
 
-
-        // if (tag.hasUUID(TAG_KEY)) {
-        //TODO    lock = tag.getUUID(TAG_KEY);
-        //} else {
-        //    lock = null;
-        //}
+        lock = input.read(TAG_KEY, UUIDUtil.CODEC).orElse(null);
     }
 
     /**
      * Write the state of all modules and pipes to the specified tag.
-     *
-     * @param tag the tag to write the data to.
      */
-    public void save(final CompoundTag tag) {
-        final ListTag modulesTag = new ListTag();
+    public void save(final ValueOutput input) {
+        var modulesData = input.childrenList(TAG_MODULES);
         for (final Module module : modules) {
-            final CompoundTag moduleTag = new CompoundTag();
             if (module != null) {
-                module.save(moduleTag);
+                module.save(modulesData.addChild());
             }
-            modulesTag.add(moduleTag);
         }
-        tag.put(TAG_MODULES, modulesTag);
 
-        if (lock != null) {
-            //TODO tag.putUUID(TAG_KEY, lock);
-        }
+        input.storeNullable(TAG_KEY, UUIDUtil.CODEC, lock);
     }
 
     @Override
@@ -346,6 +344,20 @@ public final class CasingImpl implements Casing {
 
     @Override
     public void sendData(final Face face, final CompoundTag data) {
+        sendData(face, data, (byte) -1);
+    }
+
+    @Override
+    public void sendData(Face face, Consumer<ValueOutput> data, byte type) {
+        try (var reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
+            var output = TagValueOutput.createWithContext(reporter, blockEntity.getCasingLevel().registryAccess());
+            data.accept(output);
+            sendData(face, output.buildResult(), type);
+        }
+    }
+
+    @Override
+    public void sendData(Face face, Consumer<ValueOutput> data) {
         sendData(face, data, (byte) -1);
     }
 

@@ -1,9 +1,7 @@
 package li.cil.tis3d.api.module;
 
 import li.cil.tis3d.api.API;
-import li.cil.tis3d.api.util.RenderContext;
 import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.util.ClientSided;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 

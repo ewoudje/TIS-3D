@@ -11,6 +11,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 public final class SequencerModule extends AbstractModuleWithRotation {
@@ -147,25 +149,25 @@ public final class SequencerModule extends AbstractModuleWithRotation {
     // --------------------------------------------------------------------- //
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput output) {
+        super.load(output);
 
-        decodeConfiguration(tag.getLongOr(TAG_CONFIGURATION, 0), configuration);
-        position = Math.clamp(tag.getIntOr(TAG_POSITION, 0), 0, COL_COUNT - 1);
-        delay = Math.clamp(tag.getIntOr(TAG_DELAY, 0), 0, 0xFFFF);
-        stepsRemaining = Math.clamp(tag.getIntOr(TAG_STEPS_REMAINING, 0), 0, 0xFFFF);
+        decodeConfiguration(output.getLongOr(TAG_CONFIGURATION, 0), configuration);
+        position = Math.clamp(output.getIntOr(TAG_POSITION, 0), 0, COL_COUNT - 1);
+        delay = Math.clamp(output.getIntOr(TAG_DELAY, 0), 0, 0xFFFF);
+        stepsRemaining = Math.clamp(output.getIntOr(TAG_STEPS_REMAINING, 0), 0, 0xFFFF);
 
         initializeOutput();
     }
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput input) {
+        super.save(input);
 
-        tag.putLong(TAG_CONFIGURATION, encodeConfiguration(configuration));
-        tag.putInt(TAG_POSITION, position);
-        tag.putInt(TAG_DELAY, delay);
-        tag.putInt(TAG_STEPS_REMAINING, stepsRemaining);
+        input.putLong(TAG_CONFIGURATION, encodeConfiguration(configuration));
+        input.putInt(TAG_POSITION, position);
+        input.putInt(TAG_DELAY, delay);
+        input.putInt(TAG_STEPS_REMAINING, stepsRemaining);
     }
 
     private void stepOutput() {

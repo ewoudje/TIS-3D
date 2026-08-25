@@ -1,5 +1,6 @@
 package li.cil.tis3d.common.block.entity;
 
+import com.mojang.logging.LogUtils;
 import li.cil.tis3d.api.infrared.InfraredPacket;
 import li.cil.tis3d.api.infrared.InfraredReceiver;
 import li.cil.tis3d.api.machine.Casing;
@@ -23,22 +24,24 @@ import li.cil.tis3d.common.network.message.ReceivingPipeLockedStateMessage;
 import li.cil.tis3d.common.provider.RedstoneInputProviders;
 import li.cil.tis3d.util.InventoryUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.model.data.ModelData;
 import org.jetbrains.annotations.ApiStatus;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
@@ -62,6 +65,8 @@ import java.util.Set;
  * controller (transitively) connected to their casing.
  */
 public final class CasingBlockEntity extends ComputerBlockEntity implements SidedInventoryProxy, CasingProxy, InfraredReceiver {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     // --------------------------------------------------------------------- //
     // Persisted data
 
@@ -78,7 +83,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     /**
      * Which receiving pipes of this casing are currently locked, per face.
      */
-    private final boolean[][] locked = new boolean[6][4];
+    private final boolean[][] lockedPipes = new boolean[6][4];
     private ControllerBlockEntity controller;
     private boolean isEnabled;
     private boolean redstoneDirty = true;
@@ -167,7 +172,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     public void setReceivingPipeLocked(final Face face, final Port port, final boolean value) {
         if (isReceivingPipeLocked(face, port) != value) {
             getReceivingPipe(face, port).cancelRead();
-            locked[face.ordinal()][port.ordinal()] = value;
+            lockedPipes[face.ordinal()][port.ordinal()] = value;
             sendReceivingPipeLockedState(face, port);
         }
     }
@@ -184,7 +189,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @return <code>true</code> if the port is locked; <code>false</code> otherwise.
      */
     public boolean isReceivingPipeLocked(final Face face, final Port port) {
-        return locked[face.ordinal()][port.ordinal()];
+        return lockedPipes[face.ordinal()][port.ordinal()];
     }
 
     /**
@@ -396,10 +401,10 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     @Override
-    protected void loadClient(final CompoundTag tag, final HolderLookup.Provider registries) {
-        super.loadClient(tag, registries);
+    protected void loadClient(ValueInput input) {
+        super.loadClient(input);
 
-        isEnabled = tag.getBooleanOr(TAG_ENABLED, false);
+        isEnabled = input.getBooleanOr(TAG_ENABLED, false);
 
         // This is a bit of a hack, but I can't find a better solution for now.
         //
@@ -438,45 +443,39 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     @Override
-    protected void saveClient(final CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveClient(tag, registries);
+    protected void saveClient(ValueOutput output) {
+        super.saveClient(output);
 
-        tag.putBoolean(TAG_ENABLED, isEnabled);
+        output.putBoolean(TAG_ENABLED, isEnabled);
     }
 
     // --------------------------------------------------------------------- //
     // Synchronization
 
     @Override
-    protected void loadCommon(final CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadCommon(tag, registries);
+    protected void loadCommon(ValueInput input) {
+        super.loadCommon(input);
 
-        decompressClosed(tag.getByteArray(TAG_LOCKED), locked);
+        //TODO decompressClosed(input.getByteArray(TAG_LOCKED), locked);
 
-        final CompoundTag inventoryTag = tag.getCompoundOrEmpty(TAG_INVENTORY);
-        inventory.load(inventoryTag, registries);
+        inventory.load(input);
 
-        final CompoundTag casingTag = tag.getCompoundOrEmpty(TAG_CASING);
-        casing.load(casingTag);
+        casing.load(input.childOrEmpty(TAG_CASING));
     }
 
     @Override
-    protected void saveCommon(final CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveCommon(tag, registries);
+    protected void saveCommon(ValueOutput output) {
+        super.saveCommon(output);
 
-        tag.putByteArray(TAG_LOCKED, compressClosed(locked));
+        //TODO output.putByteArray(TAG_LOCKED, compressClosed(locked));
 
         // Needed on the client also, for picking and for actually instantiating
         // the installed modules on the client side (to find the provider).
-        final CompoundTag inventoryTag = new CompoundTag();
-        inventory.save(inventoryTag, registries);
-        tag.put(TAG_INVENTORY, inventoryTag);
+        inventory.save(output);
 
         // Needed on the client also, to allow initializing client side modules
         // immediately after creation.
-        final CompoundTag casingTag = new CompoundTag();
-        casing.save(casingTag);
-        tag.put(TAG_CASING, casingTag);
+        casing.save(output.child(TAG_CASING));
     }
 
     /**
@@ -486,7 +485,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param locked the new locked state of the case.
      */
     public void setCasingLockedClient(final boolean locked) {
-        if (level != null && !level.isClientSide)
+        if (level == null || !level.isClientSide())
             throw new IllegalStateException("setCasingLockedClient should only be called on the client");
 
         casing.setLocked(locked);
@@ -502,13 +501,15 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param moduleData the original state of the module on the server, if present.
      */
     public void setStackAndModuleClient(final int slot, final ItemStack stack, final CompoundTag moduleData) {
-        if (level != null && !level.isClientSide)
+        if (level == null || !level.isClientSide())
             throw new IllegalStateException("setStackAndModuleClient should only be called on the client");
 
         inventory.setItem(slot, stack);
         final Module module = casing.getModule(Face.VALUES[slot]);
         if (module != null) {
-            module.load(moduleData);
+            try (var reporter = new ProblemReporter.ScopedCollector(problemPath(), LOGGER)) {
+                module.load(TagValueInput.create(reporter, level.registryAccess(), moduleData));
+            }
         }
     }
 
@@ -519,7 +520,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param value the new enabled state of this casing.
      */
     public void setEnabledClient(final boolean value) {
-        if (level != null && !level.isClientSide)
+        if (level == null || !level.isClientSide())
             throw new IllegalStateException("setEnabledClient should only be called on the client");
 
         isEnabled = value;
@@ -536,14 +537,13 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param value the new enabled state of this casing.
      */
     public void setReceivingPipeLockedClient(final Face face, final Port port, final boolean value) {
-        if (level != null && !level.isClientSide)
+        if (level == null || !level.isClientSide())
             throw new IllegalStateException("setReceivingPipeLockedClient should only be called on the client");
 
-        locked[face.ordinal()][port.ordinal()] = value;
+        lockedPipes[face.ordinal()][port.ordinal()] = value;
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public ModelData getModelData() {
         final ModelData modelData = super.getModelData();
         if (level == null) {

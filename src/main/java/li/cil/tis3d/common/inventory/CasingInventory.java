@@ -1,5 +1,6 @@
 package li.cil.tis3d.common.inventory;
 
+import com.mojang.logging.LogUtils;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
@@ -12,11 +13,14 @@ import li.cil.tis3d.common.network.message.CasingInventoryMessage;
 import li.cil.tis3d.common.provider.ModuleProviders;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.storage.TagValueOutput;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -25,6 +29,8 @@ import java.util.Optional;
  * Inventory implementation for casings, having six slots for modules, one per face.
  */
 public final class CasingInventory extends Inventory implements WorldlyContainer {
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private final CasingBlockEntity blockEntity;
 
     public CasingInventory(final CasingBlockEntity blockEntity) {
@@ -130,11 +136,16 @@ public final class CasingInventory extends Inventory implements WorldlyContainer
             // are not synchronized to client, or do some fancy server-side only setup
             // based on the stack. The possibilities are endless. This is robust.
             final CompoundTag moduleData;
-            if (module != null) {
-                module.onInstalled(stack);
-                module.save(moduleData = new CompoundTag());
-            } else {
-                moduleData = null;
+            try (var reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
+
+                if (module != null) {
+                    var output = TagValueOutput.createWithContext(reporter, blockEntity.getCasingLevel().registryAccess());
+                    module.onInstalled(stack);
+                    module.save(output);
+                    moduleData = output.buildResult();
+                } else {
+                    moduleData = null;
+                }
             }
 
             final CasingInventoryMessage message = new CasingInventoryMessage(blockEntity, index, stack, moduleData);

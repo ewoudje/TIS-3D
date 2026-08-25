@@ -14,6 +14,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.Optional;
 
@@ -33,7 +35,7 @@ public final class SerialPortModule extends AbstractModule implements ModuleWith
     private static final String TAG_SERIAL_INTERFACE = "serialInterface";
     private short writing;
     private Optional<SerialInterface> serialInterface = Optional.empty();
-    private Optional<CompoundTag> serialInterfaceTag = Optional.empty();
+    private Optional<ValueInput> serialInterfaceTag = Optional.empty();
     private boolean isScanScheduled = true;
 
     // --------------------------------------------------------------------- //
@@ -90,33 +92,27 @@ public final class SerialPortModule extends AbstractModule implements ModuleWith
     }
 
     @Override
-    public void load(final CompoundTag tag) {
-        super.load(tag);
+    public void load(final ValueInput input) {
+        super.load(input);
 
-        writing = tag.getShortOr(TAG_VALUE, (short) 0);
+        writing = (short) input.getShortOr(TAG_VALUE, (short) 0);
+        var serialInterfaceData = input.child(TAG_SERIAL_INTERFACE);
 
-        if (tag.contains(TAG_SERIAL_INTERFACE)) {
-            if (serialInterface.isPresent()) {
-                serialInterface.get().load(tag.getCompoundOrEmpty(TAG_SERIAL_INTERFACE));
-            } else {
-                serialInterfaceTag = Optional.of(tag.getCompoundOrEmpty(TAG_SERIAL_INTERFACE));
-            }
+        if (serialInterface.isPresent() && serialInterfaceData.isPresent()) {
+            serialInterface.get().load(serialInterfaceData.get());
+        } else {
+            serialInterfaceTag = serialInterfaceData;
         }
     }
 
     @Override
-    public void save(final CompoundTag tag) {
-        super.save(tag);
+    public void save(final ValueOutput output) {
+        super.save(output);
 
-        tag.putShort(TAG_VALUE, writing);
+        output.putShort(TAG_VALUE, writing);
 
-        if (serialInterface.isPresent()) {
-            final CompoundTag serialInterfaceTag = new CompoundTag();
-            serialInterface.get().save(serialInterfaceTag);
-            if (!tag.isEmpty()) {
-                tag.put(TAG_SERIAL_INTERFACE, serialInterfaceTag);
-            }
-        }
+        serialInterface.ifPresent(anInterface ->
+            anInterface.save(output.child(TAG_SERIAL_INTERFACE)));
     }
 
     // --------------------------------------------------------------------- //
