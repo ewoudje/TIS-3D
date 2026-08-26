@@ -19,6 +19,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -26,7 +28,6 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -42,11 +43,11 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public final class CodeBookScreen extends Screen {
-    private static final Component ERROR_ON_PREVIOUS_PAGE_TOOLTIP = Component.translatable("tis3d.code_book.error_on_previous_page");
-    private static final Component ERROR_ON_NEXT_PAGE_TOOLTIP = Component.translatable("tis3d.code_book.error_on_next_page");
-    private static final Component PREVIOUS_PAGE_TOOLTIP = Component.translatable("tis3d.code_book.previous_page");
-    private static final Component NEXT_PAGE_TOOLTIP = Component.translatable("tis3d.code_book.next_page");
-    private static final Component DELETE_PAGE_TOOLTIP = Component.translatable("tis3d.code_book.delete_page");
+    private static final ClientTooltipComponent ERROR_ON_PREVIOUS_PAGE_TOOLTIP = ClientTooltipComponent.create(Component.translatable("tis3d.code_book.error_on_previous_page").getVisualOrderText());
+    private static final ClientTooltipComponent ERROR_ON_NEXT_PAGE_TOOLTIP = ClientTooltipComponent.create(Component.translatable("tis3d.code_book.error_on_next_page").getVisualOrderText());
+    private static final Component PREVIOUS_PAGE_COMPONENT = Component.translatable("tis3d.code_book.previous_page");
+    private static final Component NEXT_PAGE_COMPONENT = Component.translatable("tis3d.code_book.next_page");
+    private static final Component DELETE_PAGE_COMPONENT = Component.translatable("tis3d.code_book.delete_page");
 
     private static final int GUI_WIDTH = 218;
     private static final int GUI_HEIGHT = 230;
@@ -128,7 +129,7 @@ public final class CodeBookScreen extends Screen {
     public void renderBackground(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTicks) {
         super.renderBackground(graphics, mouseX, mouseY, partialTicks);
 
-        graphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, guiX, guiY, 0f, 0f, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, guiX, guiY, 0f, 0f, GUI_WIDTH, GUI_HEIGHT, 256, 256);
     }
 
     @Override
@@ -685,14 +686,14 @@ public final class CodeBookScreen extends Screen {
 
             // Part two of error handling, draw tooltip, *on top* of blinking cursor.
             if (mouseX >= startX && mouseX <= endX && mouseY >= startY && mouseY <= startY + getFontRenderer().lineHeight) {
-                final List<Component> tooltip = new ArrayList<>();
+                final List<ClientTooltipComponent> tooltip = new ArrayList<>();
                 if (isErrorOnPreviousPage) {
                     tooltip.add(ERROR_ON_PREVIOUS_PAGE_TOOLTIP);
                 } else if (isErrorOnNextPage) {
                     tooltip.add(ERROR_ON_NEXT_PAGE_TOOLTIP);
                 }
-                tooltip.add(exception.getDisplayMessage());
-                //TODO graphics.renderComponentTooltip(getFontRenderer(), tooltip, mouseX, mouseY);
+                tooltip.add(ClientTooltipComponent.create(exception.getDisplayMessage().getVisualOrderText()));
+                graphics.renderTooltip(font, tooltip, mouseX, mouseY, DefaultTooltipPositioner.INSTANCE, null);
             }
         } else {
             // Draw selection position in text.
@@ -731,19 +732,19 @@ public final class CodeBookScreen extends Screen {
             super(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, Component.empty(), action, DEFAULT_NARRATION);
             this.type = type;
             setTooltip(Tooltip.create(type == PageChangeType.Previous
-                ? PREVIOUS_PAGE_TOOLTIP
-                : NEXT_PAGE_TOOLTIP));
+                ? PREVIOUS_PAGE_COMPONENT
+                : NEXT_PAGE_COMPONENT));
         }
 
         @Override
         protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
             final int offsetX = isHoveredOrFocusedUsingKeyboard() ? BUTTON_WIDTH : 0;
             final int offsetY = type == PageChangeType.Previous ? BUTTON_HEIGHT : 0;
-            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
-                BUTTON_WIDTH, BUTTON_HEIGHT,
-                TEXTURE_X + offsetX, TEXTURE_Y + offsetY,
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
                 getX(), getY(),
-                BUTTON_WIDTH, BUTTON_HEIGHT
+                TEXTURE_X + offsetX, TEXTURE_Y + offsetY,
+                BUTTON_WIDTH, BUTTON_HEIGHT,
+                256, 256
             );
         }
 
@@ -761,17 +762,17 @@ public final class CodeBookScreen extends Screen {
 
         ButtonDeletePage(final int x, final int y, final OnPress action) {
             super(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, Component.empty(), action, DEFAULT_NARRATION);
-            setTooltip(Tooltip.create(DELETE_PAGE_TOOLTIP));
+            setTooltip(Tooltip.create(DELETE_PAGE_COMPONENT));
         }
 
         @Override
         protected void renderContents(GuiGraphics guiGraphics, int i, int i1, float v) {
             final int offsetX = isHoveredOrFocusedUsingKeyboard() ? BUTTON_WIDTH : 0;
-            guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
-                BUTTON_WIDTH, BUTTON_HEIGHT,
-                TEXTURE_X + offsetX, TEXTURE_Y,
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
                 getX(), getY(),
-                BUTTON_WIDTH, BUTTON_HEIGHT
+                TEXTURE_X + offsetX, TEXTURE_Y,
+                BUTTON_WIDTH, BUTTON_HEIGHT,
+                256, 256
             );
         }
 

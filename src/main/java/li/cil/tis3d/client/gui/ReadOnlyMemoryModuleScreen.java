@@ -14,6 +14,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -84,7 +85,14 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
 
     @Override
     protected void renderBg(final GuiGraphics graphics, final float partialTicks, final int x, final int y) {
-        graphics.blit(Textures.LOCATION_GUI_MEMORY, imageWidth, imageHeight, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        graphics.blit(
+            RenderPipelines.GUI_TEXTURED,
+            Textures.LOCATION_GUI_MEMORY,
+            leftPos, topPos,
+            0, 0,
+            imageWidth, imageHeight,
+            256, 256
+        );
     }
 
     @Override

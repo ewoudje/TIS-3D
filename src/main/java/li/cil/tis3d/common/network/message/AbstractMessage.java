@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 
+//TODO has to be rewritten to handle the messages somewhere else, crashes because of getClientLevel
 public abstract class AbstractMessage implements CustomPacketPayload {
     protected static final Logger LOGGER = LogUtils.getLogger();
 

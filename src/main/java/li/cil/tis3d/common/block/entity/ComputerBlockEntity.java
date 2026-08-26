@@ -302,7 +302,7 @@ public abstract class ComputerBlockEntity extends BlockEntity implements PipeHos
         var iterator = input.childrenListOrEmpty(TAG_PIPES).iterator();
         for (PipeImpl pipe : pipes) {
             if (iterator.hasNext()) {
-                //TODO pipe.load(iterator.next());
+                pipe.load(iterator.next());
             } else break;
         }
 

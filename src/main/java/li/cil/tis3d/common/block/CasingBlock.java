@@ -116,6 +116,19 @@ public class CasingBlock extends BaseEntityBlock {
     // --------------------------------------------------------------------- //
     // Common
 
+
+    @Override
+    public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
+        final BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof final CasingBlockEntity casing) {
+            casing.checkNeighbors();
+            casing.notifyModulesOfBlockChange(neighbor);
+            casing.markRedstoneDirty();
+        }
+
+        super.onNeighborChange(state, level, pos, neighbor);
+    }
+
     @Override
     public RenderShape getRenderShape(final BlockState state) {
         return RenderShape.MODEL;
@@ -222,9 +235,6 @@ public class CasingBlock extends BaseEntityBlock {
         return super.getCloneItemStack(level, pos, state, includeData, player);
     }
 
-    // --------------------------------------------------------------------- //
-    // Redstone
-
     @SuppressWarnings("deprecation")
     @Override
     public boolean hasAnalogOutputSignal(final BlockState state) {
@@ -253,21 +263,5 @@ public class CasingBlock extends BaseEntityBlock {
     @Override
     public boolean isSignalSource(final BlockState state) {
         return true;
-    }
-
-    // --------------------------------------------------------------------- //
-    // Networking
-
-
-    @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston) {
-        final BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (blockEntity instanceof final CasingBlockEntity casing) {
-            casing.checkNeighbors();
-            // TODO casing.notifyModulesOfBlockChange(pos.offset(orientation));
-            casing.markRedstoneDirty();
-        }
-
-        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
     }
 }

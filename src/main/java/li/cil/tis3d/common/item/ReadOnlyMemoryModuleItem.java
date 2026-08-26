@@ -34,7 +34,13 @@ public final class ReadOnlyMemoryModuleItem extends ModuleItem {
      * @return the data loaded from the stack.
      */
     public static byte[] loadFromStack(final ItemStack stack) {
-        return stack.get(DataComponentTypes.ROM_DATA_COMPONENT).array();
+        ByteBuffer buffer = stack.get(DataComponentTypes.ROM_DATA_COMPONENT);
+        if (buffer == null) return EMPTY_DATA;
+        if (buffer.hasArray()) return buffer.array();
+
+        byte[] result = new byte[buffer.remaining()];
+        buffer.get(result);
+        return result;
     }
 
     /**
