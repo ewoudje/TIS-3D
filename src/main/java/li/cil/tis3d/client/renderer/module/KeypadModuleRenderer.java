@@ -42,7 +42,7 @@ public class KeypadModuleRenderer extends AbstractModuleWithRotationRenderer<Key
         // Draw overlay for hovered button if we can currently input a value.
 
         if (value.isEmpty()) {
-            final Vec3 hitPos = Vec3.ZERO; //TODO getLocalHitPosition(module, context.getDispatcher().cameraHitResult);
+            final Vec3 hitPos = getLocalHitPosition(module, context);
             if (hitPos != null) {
                 final Vec3 uv = module.hitToUV(hitPos);
                 final int button = module.uvToButton((float) uv.x, (float) uv.y);

@@ -53,6 +53,8 @@ public interface ModuleRenderContext {
 
     boolean isReceivingPipeLocked(Port port);
 
+    long gameTime();
+
     /**
      * Utility method to determine if the observer we are rendering for is close enough so that detailed
      * rendering should be provided.

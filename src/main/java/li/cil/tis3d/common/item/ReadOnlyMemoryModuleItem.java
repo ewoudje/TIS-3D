@@ -15,6 +15,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public final class ReadOnlyMemoryModuleItem extends ModuleItem {
     private static final String TAG_DATA = "data";
@@ -33,14 +34,13 @@ public final class ReadOnlyMemoryModuleItem extends ModuleItem {
      * @param stack the item stack to load the data from.
      * @return the data loaded from the stack.
      */
-    public static byte[] loadFromStack(final ItemStack stack) {
-        ByteBuffer buffer = stack.get(DataComponentTypes.ROM_DATA_COMPONENT);
-        if (buffer == null) return EMPTY_DATA;
-        if (buffer.hasArray()) return buffer.array();
+    public static void loadFromStack(final ItemStack stack, byte[] data) {
+        Arrays.fill(data, (byte) 0);
 
-        byte[] result = new byte[buffer.remaining()];
-        buffer.get(result);
-        return result;
+        ByteBuffer buffer = stack.get(DataComponentTypes.ROM_DATA_COMPONENT);
+        if (buffer == null) return;
+
+        buffer.get(data, 0, Math.min(data.length, buffer.remaining()));
     }
 
     /**

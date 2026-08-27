@@ -88,6 +88,7 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
         renderState.hitResult = Minecraft.getInstance().hitResult;
         renderState.isCloseEnoughForDetails = distance < DETAIL_RENDER_RANGE * DETAIL_RENDER_RANGE;
         renderState.isKindaClose = distance < KINDA_CLOSE_RANGE * KINDA_CLOSE_RANGE;
+        renderState.gameTime = blockEntity.getLevel().getGameTime();
 
         for (Face f : Face.VALUES) {
             var module = renderState.modules[f.ordinal()] = blockEntity.getModule(f);
@@ -133,7 +134,7 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
     }
 
     private boolean isBackFace(final Vec3 cameraPosition, final BlockPos position, final Face face) {
-        final Vec3 faceNormal = Vec3.atLowerCornerOf(Face.toDirection(face).getUnitVec3i()); //TODO wtf?
+        final Vec3 faceNormal = Vec3.atLowerCornerOf(Face.toDirection(face).getUnitVec3i());
         final Vec3 faceCenter = faceNormal.scale(0.5).add(position.getCenter());
         final Vec3 cameraToFaceCenter = faceCenter.subtract(cameraPosition);
         return faceNormal.dot(cameraToFaceCenter) > 0;

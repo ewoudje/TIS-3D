@@ -94,40 +94,32 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         super(BlockEntities.CASING.get(), pos, state);
     }
 
-    private static void decompressClosed(final Optional<byte[]> compressed, final boolean[][] decompressed) {
-        byte[] content;
-        if (compressed.isEmpty() || (content = compressed.get()).length != 3) {
-            return;
-        }
-
+    private static void decompressClosed(final int compressed, final boolean[][] decompressed) {
+        int shifted = compressed;
         for (int i = 0; i < 6; i++) {
-            int c = content[i >> 1] & 0b11111111;
-            if ((i & 1) == 1) {
-                c >>>= 4;
-            }
+            int f = shifted & 0b1111;
+            shifted >>= 4;
+
             final boolean[] ports = decompressed[i];
             for (int j = 0; j < 4; j++) {
-                ports[j] = (c & (1 << j)) != 0;
+                ports[j] = (f & (1 << j)) != 0;
             }
         }
     }
 
-    private static byte[] compressClosed(final boolean[][] decompressed) {
-        // Cram two faces into one byte (four ports use four bits).
-        final byte[] compressed = new byte[3];
-        for (int i = 0; i < 6; i++) {
+    private static int compressClosed(final boolean[][] decompressed) {
+        int compressed = 0;
+
+        for (int i = 5; i >= 0; i--) {
+            compressed <<= 4;
             final boolean[] ports = decompressed[i];
-            int c = 0;
             for (int j = 0; j < 4; j++) {
                 if (ports[j]) {
-                    c |= 1 << j;
+                    compressed |= 1 << j;
                 }
             }
-            if ((i & 1) == 1) {
-                c <<= 4;
-            }
-            compressed[i >> 1] |= (byte) c;
         }
+
         return compressed;
     }
 
@@ -456,7 +448,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     protected void loadCommon(ValueInput input) {
         super.loadCommon(input);
 
-        //TODO decompressClosed(input.getByteArray(TAG_LOCKED), locked);
+        decompressClosed((short) input.getIntOr(TAG_LOCKED, 0), lockedPipes);
 
         inventory.load(input);
 
@@ -467,7 +459,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     protected void saveCommon(ValueOutput output) {
         super.saveCommon(output);
 
-        //TODO output.putByteArray(TAG_LOCKED, compressClosed(locked));
+        output.putInt(TAG_LOCKED, compressClosed(lockedPipes));
 
         // Needed on the client also, for picking and for actually instantiating
         // the installed modules on the client side (to find the provider).

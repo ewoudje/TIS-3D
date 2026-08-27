@@ -1,5 +1,6 @@
 package li.cil.tis3d.common.module;
 
+import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import li.cil.tis3d.api.machine.Casing;
@@ -18,7 +19,9 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * The RAM module can be used to store up to 256 values by address. It runs
@@ -121,7 +124,7 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
             if (isReading) {
                 ReadOnlyMemoryModuleItem.saveToStack(heldItem, memory);
             } else {
-                load(ReadOnlyMemoryModuleItem.loadFromStack(heldItem));
+                ReadOnlyMemoryModuleItem.loadFromStack(heldItem, memory);
                 sendFull();
                 getCasing().setChanged();
             }
@@ -145,8 +148,11 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
     @Override
     public void load(final ValueInput input) {
         super.load(input);
+        Arrays.fill(memory, (byte) 0);
 
-        //TODO load(input.getByteArray(TAG_MEMORY).orElse(new byte[0]));
+        Optional<ByteBuffer> bytes = input.read(TAG_MEMORY, Codec.BYTE_BUFFER);
+        bytes.ifPresent(byteBuffer -> byteBuffer.get(memory, 0, Math.min(byteBuffer.remaining(), MEMORY_SIZE)));
+
         address = input.getByteOr(TAG_ADDRESS, (byte) 0);
         state = EnumUtils.load(State.class, TAG_STATE, input).orElse(State.ADDRESS);
     }
@@ -155,7 +161,7 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
     public void save(final ValueOutput output) {
         super.save(output);
 
-        //TODO output.putByteArray(TAG_MEMORY, memory.clone());
+        output.store(TAG_MEMORY, Codec.BYTE_BUFFER, ByteBuffer.wrap(memory));
         output.putByte(TAG_ADDRESS, address);
         EnumUtils.save(state, TAG_STATE, output);
     }
@@ -296,13 +302,6 @@ public class RandomAccessMemoryModule extends AbstractModuleWithRotation {
         data.writeByte(PACKET_FULL);
         data.writeBytes(memory);
         getCasing().sendData(getFace(), data);
-    }
-
-    protected final void load(final byte[] data) {
-        System.arraycopy(data, 0, memory, 0, Math.min(data.length, memory.length));
-        if (data.length < memory.length) {
-            Arrays.fill(memory, data.length, memory.length, (byte) 0);
-        }
     }
 
     protected enum State {

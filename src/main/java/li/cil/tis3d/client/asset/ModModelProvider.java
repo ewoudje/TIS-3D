@@ -43,6 +43,7 @@ public final class ModModelProvider extends ModelProvider {
             .parent(modLocation("item/module"))
             .requiredTextureSlot(TextureSlot.LAYER0)
             .requiredTextureSlot(TextureSlot.LAYER1)
+            .requiredTextureSlot(TextureSlot.PARTICLE)
             .build();
     }
 
@@ -95,7 +96,8 @@ public final class ModModelProvider extends ModelProvider {
         try {
             var model = modelTemplate.create(
                 item.get(),
-                TextureMapping.layered(modLocation("block/casing_module"), overlayTexture),
+                TextureMapping.layered(modLocation("block/casing_module"), overlayTexture)
+                    .put(TextureSlot.PARTICLE, modLocation("block/casing_module")),
                 itemModels.modelOutput
             );
 

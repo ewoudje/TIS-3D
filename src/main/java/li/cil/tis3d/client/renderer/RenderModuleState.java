@@ -41,6 +41,7 @@ public final class RenderModuleState extends BlockEntityRenderState implements M
     public boolean isKindaClose;
     public boolean isCloseEnoughForDetails;
     public boolean[][] isPipeLocked = new boolean[6][4];
+    public long gameTime;
     public HitResult hitResult;
     public Face currentFace;
 
@@ -79,6 +80,11 @@ public final class RenderModuleState extends BlockEntityRenderState implements M
     @Override
     public boolean isReceivingPipeLocked(Port port) {
         return isPipeLocked[currentFace.ordinal()][port.ordinal()];
+    }
+
+    @Override
+    public long gameTime() {
+        return gameTime;
     }
 
     @Override

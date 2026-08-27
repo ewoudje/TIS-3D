@@ -2,6 +2,7 @@ package li.cil.tis3d.common.container;
 
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.item.ReadOnlyMemoryModuleItem;
+import li.cil.tis3d.common.module.RandomAccessMemoryModule;
 import li.cil.tis3d.common.network.Network;
 import li.cil.tis3d.common.network.message.ServerReadOnlyMemoryModuleDataMessage;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,6 +19,7 @@ public final class ReadOnlyMemoryModuleMenu extends AbstractContainerMenu {
 
     private final Player player;
     private final InteractionHand hand;
+    private final byte[] scratchData = new byte[RandomAccessMemoryModule.MEMORY_SIZE];
     private byte[] lastSentData;
 
     public ReadOnlyMemoryModuleMenu(final int id, final Player player, final InteractionHand hand) {
@@ -45,10 +47,11 @@ public final class ReadOnlyMemoryModuleMenu extends AbstractContainerMenu {
         super.broadcastChanges();
 
         if (player instanceof final ServerPlayer serverPlayer) {
-            final byte[] data = ReadOnlyMemoryModuleItem.loadFromStack(player.getItemInHand(hand));
-            if (!Arrays.equals(data, lastSentData)) {
-                lastSentData = data;
-                final ServerReadOnlyMemoryModuleDataMessage message = new ServerReadOnlyMemoryModuleDataMessage(hand, data);
+            ReadOnlyMemoryModuleItem.loadFromStack(player.getItemInHand(hand), scratchData);
+
+            if (!Arrays.equals(scratchData, lastSentData)) {
+                lastSentData = scratchData;
+                final ServerReadOnlyMemoryModuleDataMessage message = new ServerReadOnlyMemoryModuleDataMessage(hand, scratchData);
                 Network.sendToPlayer(serverPlayer, message);
             }
         }

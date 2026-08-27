@@ -32,19 +32,19 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
 
         // Render detailed state when player is close.
         if (!module.hasElapsed() && context.closeEnoughForDetails()) {
-            final long gameTime = 0; //TODO context.getDispatcher().level.getGameTime();
+            final long gameTime = context.gameTime();
             final float remaining = (float) (module.getTimer() - gameTime) - context.getPartialTicks();
             if (remaining <= 0) {
                 module.elapsed();
             } else {
-                drawState(module, context, remaining);
+                drawState(context, remaining);
             }
         }
 
         matrixStack.popPose();
     }
 
-    private void drawState(final TimerModule module, final ModuleRenderContext context, final float remaining) {
+    private void drawState(final ModuleRenderContext context, final float remaining) {
         final float milliseconds = remaining * 50f; // One tick is 50ms.
         final float seconds = milliseconds / 1000f;
         final int minutes = (int) (seconds / 60f);

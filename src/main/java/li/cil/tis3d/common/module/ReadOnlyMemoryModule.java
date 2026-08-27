@@ -26,7 +26,7 @@ public final class ReadOnlyMemoryModule extends RandomAccessMemoryModule {
     public void onInstalled(final ItemStack stack) {
         super.onInstalled(stack);
 
-        load(ReadOnlyMemoryModuleItem.loadFromStack(stack));
+        ReadOnlyMemoryModuleItem.loadFromStack(stack, memory);
     }
 
     @Override

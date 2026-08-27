@@ -3,6 +3,7 @@ package li.cil.tis3d.api.prefab.module;
 import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleRenderer;
+import li.cil.tis3d.api.util.ModuleRenderContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -19,7 +20,8 @@ public abstract class AbstractModuleRenderer<T extends Module> implements Module
      * @param hitResult the current hit result.
      * @return <tt>true</tt> if the observer is looking at the module, <tt>false</tt> otherwise.
      */
-    protected boolean isHitFace(final T module, @Nullable final HitResult hitResult) {
+    protected boolean isHitFace(final T module, ModuleRenderContext ctx) {
+        HitResult hitResult = ctx.getHitResult();
         if (!(hitResult instanceof final BlockHitResult blockHitResult)) {
             return false;
         }
@@ -43,7 +45,8 @@ public abstract class AbstractModuleRenderer<T extends Module> implements Module
      * @return the UV coordinate the observer is looking at as the X and Y components.
      */
     @Nullable
-    protected Vec3 getLocalHitPosition(final T module, @Nullable final HitResult hitResult) {
+    protected Vec3 getLocalHitPosition(final T module, ModuleRenderContext ctx) {
+        HitResult hitResult = ctx.getHitResult();
         if (!(hitResult instanceof final BlockHitResult blockHitResult)) {
             return null;
         }

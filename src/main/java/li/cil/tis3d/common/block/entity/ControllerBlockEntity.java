@@ -268,7 +268,7 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
         if (state != lastSentState) {
             final BlockState blockState = level.getBlockState(getBlockPos());
             level.sendBlockUpdated(getBlockPos(), blockState, blockState, 7);
-            //TODO level.blockUpdated(getBlockPos(), blockState.getBlock());
+            //should be fine? removed in 1.21.11 level.blockUpdated(getBlockPos(), blockState.getBlock());
             Network.sendToTrackingPlayers(this, new ControllerStateMessage(this, state));
             lastSentState = state;
         }

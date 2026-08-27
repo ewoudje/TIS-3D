@@ -309,7 +309,14 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
 
         final var level = getMinecraft().level;
         final int vPos = level != null ? (int) (level.getGameTime() % 16) * 8 : 0;
-        //TODO graphics.blit(Textures.LOCATION_GUI_MEMORY, 0, 0, 256 - (CELL_WIDTH + 1), vPos, 11, 8);
+        graphics.blit(
+            RenderPipelines.GUI_TEXTURED,
+            Textures.LOCATION_GUI_MEMORY,
+            0, 0,
+            256 - (CELL_WIDTH + 1), vPos,
+            11, 8,
+            256, 256
+        );
 
         matrixStack.popMatrix();
     }
