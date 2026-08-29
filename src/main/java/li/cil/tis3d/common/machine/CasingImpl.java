@@ -15,6 +15,8 @@ import li.cil.tis3d.common.block.entity.ControllerBlockEntity;
 import li.cil.tis3d.common.item.DataComponentTypes;
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.network.Network;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.common.CommonMessages;
 import li.cil.tis3d.common.provider.ModuleProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -340,7 +342,9 @@ public final class CasingImpl implements Casing {
 
     @Override
     public void sendData(final Face face, final CompoundTag data, final byte type) {
-        Network.sendModuleData(blockEntity, face, data, type);
+        Module module = getModule(face);
+        if (module == null) return;
+        MessageSender.sendMessageFor(module, new CommonMessages.ModuleNBTData(data), type);
     }
 
     @Override
@@ -364,7 +368,10 @@ public final class CasingImpl implements Casing {
 
     @Override
     public void sendData(final Face face, final ByteBuf data, final byte type) {
-        Network.sendModuleData(blockEntity, face, data, type);
+        Module module = getModule(face);
+        if (module == null) return;
+
+        MessageSender.sendMessageFor(module, new CommonMessages.ModuleByteData(data), type);
     }
 
     @Override

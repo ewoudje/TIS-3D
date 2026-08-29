@@ -5,7 +5,8 @@ import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.container.ReadOnlyMemoryModuleMenu;
 import li.cil.tis3d.common.module.RandomAccessMemoryModule;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.common.network.message.ClientReadOnlyMemoryModuleDataMessage;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.common.CommonMessages;
 import li.cil.tis3d.util.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -55,7 +56,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         // data to avoid erasing ROM when closing UI again too quickly.
         if (receivedData) {
             // Save any changes made and send them to the server.
-            Network.sendToServer(new ClientReadOnlyMemoryModuleDataMessage(menu.getHand(), data));
+            MessageSender.sendToServer(new CommonMessages.ROMData(data, menu.getHand()));
         }
     }
 

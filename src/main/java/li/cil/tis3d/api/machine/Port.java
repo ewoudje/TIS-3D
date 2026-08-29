@@ -1,6 +1,8 @@
 package li.cil.tis3d.api.machine;
 
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Direction;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -18,6 +20,9 @@ public enum Port {
      * All possible enum values for quick indexing.
      */
     public static final Port[] VALUES = Port.values();
+    public static final StreamCodec<ByteBuf, Port> STREAM_CODEC =
+        StreamCodec.of((b, p) -> b.writeByte(p.ordinal()), b -> VALUES[b.readByte()]);
+
     /**
      * Mapping ports to their opposites (by <tt>ordinal()</tt>).
      */

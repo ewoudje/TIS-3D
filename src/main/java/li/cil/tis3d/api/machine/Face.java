@@ -1,6 +1,9 @@
 package li.cil.tis3d.api.machine;
 
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Direction;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 /**
  * Enumeration over the faces of a {@link Casing}.
@@ -29,6 +32,7 @@ public enum Face {
      * Mapping faces to their opposites (by <tt>ordinal()</tt>).
      */
     public static final Face[] OPPOSITES = new Face[]{Y_POS, Y_NEG, Z_POS, Z_NEG, X_POS, X_NEG};
+    public static final StreamCodec<ByteBuf, Face> STREAM_CODEC = ByteBufCodecs.BYTE.map(b -> VALUES[b], b -> (byte) b.ordinal());
 
     /**
      * Convert a facing from Forge's format to our internal format.

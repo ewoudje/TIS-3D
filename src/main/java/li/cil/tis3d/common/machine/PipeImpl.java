@@ -6,6 +6,8 @@ import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.common.network.Network;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.s2c.S2CMessages;
 import li.cil.tis3d.util.EnumUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.storage.ValueInput;
@@ -196,7 +198,12 @@ public final class PipeImpl implements Pipe {
         final double z = oz * 0.55 + position.getZ() + 0.5;
         final double extraOffsetY = oy < 0 ? -0.2 : (oy > 0) ? 0.1 : 0;
 
-        Network.sendPipeEffect(host.getPipeHostLevel(), x, y + extraOffsetY, z);
+        MessageSender.sendToNearbyPlayers(
+            host.getPipeHostLevel(),
+            position,
+            MessageSender.RANGE_LOW,
+            new S2CMessages.PipeParticle(x, y + extraOffsetY, z)
+        );
     }
 
     @Override

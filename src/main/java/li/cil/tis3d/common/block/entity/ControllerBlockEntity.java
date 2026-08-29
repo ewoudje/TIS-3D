@@ -1,16 +1,18 @@
 package li.cil.tis3d.common.block.entity;
 
+import io.netty.buffer.ByteBuf;
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.machine.HaltAndCatchFireException;
 import li.cil.tis3d.common.config.CommonConfig;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.common.network.message.ControllerStateMessage;
-import li.cil.tis3d.common.network.message.HaltAndCatchFireMessage;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.s2c.S2CMessages;
 import li.cil.tis3d.util.LevelUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -190,8 +192,7 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
         if (!level.isClientSide()) {
             state = ControllerState.READY;
             casings.forEach(CasingBlockEntity::onDisabled);
-            final HaltAndCatchFireMessage message = new HaltAndCatchFireMessage(getBlockPos());
-            Network.sendToNearbyPlayers(this, Network.RANGE_MEDIUM, message);
+            MessageSender.sendToNearbyPlayers(level, getBlockPos(), MessageSender.RANGE_MEDIUM, new S2CMessages.HaltCatchFire(getBlockPos()));
         }
         hcfCooldown = COOLDOWN_HCF;
     }
@@ -267,7 +268,7 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
             final BlockState blockState = level.getBlockState(getBlockPos());
             level.sendBlockUpdated(getBlockPos(), blockState, blockState, 7);
             //should be fine? removed in 1.21.11 level.blockUpdated(getBlockPos(), blockState.getBlock());
-            Network.sendToTrackingPlayers(this, new ControllerStateMessage(this, state));
+            MessageSender.sendToNearbyPlayers(getLevel(), getBlockPos(), new S2CMessages.ControllerState(getBlockPos(), state));
             lastSentState = state;
         }
 
@@ -560,6 +561,10 @@ public final class ControllerBlockEntity extends ComputerBlockEntity {
          * All possible enum values for quick indexing.
          */
         public static final ControllerState[] VALUES = ControllerState.values();
+        public static final StreamCodec<ByteBuf, ControllerState> STREAM_CODEC = StreamCodec.of(
+            (b, s) -> b.writeByte(s.ordinal()),
+            b -> ControllerState.VALUES[b.readByte()]
+        );
         /**
          * Whether this states is an error state, i.e. whether it indicates the controller
          * not operation normally due it being configured incorrectly, for example.

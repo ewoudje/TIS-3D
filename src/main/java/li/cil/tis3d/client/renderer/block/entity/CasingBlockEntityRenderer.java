@@ -10,6 +10,7 @@ import li.cil.tis3d.client.renderer.RenderModuleState;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.network.Network;
+import li.cil.tis3d.common.network.message.MessageSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -63,7 +64,7 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
 
     @Override
     public int getViewDistance() {
-        return Network.RANGE_HIGH;
+        return MessageSender.RANGE_HIGH; //TODO....
     }
 
     @Override

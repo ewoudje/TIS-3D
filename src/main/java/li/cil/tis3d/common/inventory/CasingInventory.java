@@ -8,7 +8,8 @@ import li.cil.tis3d.api.module.ModuleProvider;
 import li.cil.tis3d.api.module.traits.ModuleWithRotation;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.common.network.message.CasingInventoryMessage;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.s2c.S2CMessages;
 import li.cil.tis3d.common.provider.ModuleProviders;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -131,12 +132,11 @@ public final class CasingInventory extends Inventory implements WorldlyContainer
                     module.save(output);
                     moduleData = output.buildResult();
                 } else {
-                    moduleData = null;
+                    moduleData = new CompoundTag();
                 }
             }
 
-            final CasingInventoryMessage message = new CasingInventoryMessage(blockEntity, index, stack, moduleData);
-            Network.sendToTrackingPlayers(blockEntity, message);
+            MessageSender.sendMessageFor(blockEntity, new S2CMessages.Inventory(index, stack, moduleData));
         }
 
         blockEntity.setModule(Face.VALUES[index], module);
@@ -153,8 +153,7 @@ public final class CasingInventory extends Inventory implements WorldlyContainer
                 module.onDisposed();
             }
 
-            final CasingInventoryMessage message = new CasingInventoryMessage(blockEntity, index, ItemStack.EMPTY, null);
-            Network.sendToTrackingPlayers(blockEntity, message);
+            MessageSender.sendMessageFor(blockEntity, new S2CMessages.Inventory(index, ItemStack.EMPTY, new CompoundTag()));
         } else {
             if (module != null) {
                 module.onDisposed();

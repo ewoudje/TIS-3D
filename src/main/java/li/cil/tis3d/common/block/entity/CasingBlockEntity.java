@@ -1,6 +1,5 @@
 package li.cil.tis3d.common.block.entity;
 
-import com.mojang.logging.LogUtils;
 import li.cil.tis3d.api.infrared.InfraredPacket;
 import li.cil.tis3d.api.infrared.InfraredReceiver;
 import li.cil.tis3d.api.machine.Casing;
@@ -20,31 +19,26 @@ import li.cil.tis3d.common.inventory.SidedInventoryProxy;
 import li.cil.tis3d.common.machine.CasingImpl;
 import li.cil.tis3d.common.machine.CasingProxy;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.common.network.message.CasingEnabledStateMessage;
-import li.cil.tis3d.common.network.message.CasingLockedStateMessage;
-import li.cil.tis3d.common.network.message.ClientCasingLoadedMessage;
-import li.cil.tis3d.common.network.message.ReceivingPipeLockedStateMessage;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.c2s.C2SMessages;
+import li.cil.tis3d.common.network.message.s2c.S2CMessages;
 import li.cil.tis3d.common.provider.RedstoneInputProviders;
 import li.cil.tis3d.util.InventoryUtils;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.model.data.ModelData;
 import org.jetbrains.annotations.ApiStatus;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
@@ -67,8 +61,6 @@ import java.util.Set;
  * controller (transitively) connected to their casing.
  */
 public final class CasingBlockEntity extends ComputerBlockEntity implements SidedInventoryProxy, CasingProxy, InfraredReceiver {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     // --------------------------------------------------------------------- //
     // Persisted data
 
@@ -433,7 +425,7 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
         // The downside of this approach is that we send the module data more than
         // once, which is a bit of a waste of bandwidth, but as it only occurs when
         // players load the modules initially, this should be acceptable.
-        Network.sendToServer(new ClientCasingLoadedMessage(this));
+        MessageSender.sendMessageFor(this, new C2SMessages.Loaded());
     }
 
     @Override
@@ -494,16 +486,14 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
      * @param stack      the new item stack in that slot, if any.
      * @param moduleData the original state of the module on the server, if present.
      */
-    public void setStackAndModuleClient(final int slot, final ItemStack stack, final CompoundTag moduleData) {
+    public void setStackAndModuleClient(final int slot, final ItemStack stack, final ValueInput moduleData) {
         if (level == null || !level.isClientSide())
             throw new IllegalStateException("setStackAndModuleClient should only be called on the client");
 
         inventory.setItem(slot, stack);
         final Module module = casing.getModule(Face.VALUES[slot]);
         if (module != null) {
-            try (var reporter = new ProblemReporter.ScopedCollector(problemPath(), LOGGER)) {
-                module.load(TagValueInput.create(reporter, level.registryAccess(), moduleData));
-            }
+            module.load(moduleData);
         }
     }
 
@@ -609,22 +599,21 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
     }
 
     private void sendState() {
-        final CasingEnabledStateMessage message = new CasingEnabledStateMessage(this, isEnabled);
-        Network.sendToTrackingPlayers(this, message);
+        MessageSender.sendMessageFor(this, new S2CMessages.EnabledState(isEnabled));
     }
 
     private void sendCasingLockedState() {
-        final CasingLockedStateMessage message = new CasingLockedStateMessage(this, isLocked());
-        Network.sendToTrackingPlayers(this, message);
+        MessageSender.sendMessageFor(this, new S2CMessages.LockedState(isLocked()));
 
         getBlockEntityLevel().playSound(null, getBlockPos(),
             SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, isLocked() ? 0.5f : 0.6f);
     }
 
     private void sendReceivingPipeLockedState(final Face face, final Port port) {
-        final ReceivingPipeLockedStateMessage message = new ReceivingPipeLockedStateMessage(this, face, port, isReceivingPipeLocked(face, port));
-        Network.sendToTrackingPlayers(this, message);
+        Module module = getModule(face);
+        if (module == null) return;
 
+        MessageSender.sendMessageFor(module, new S2CMessages.PipeLockedState(port, isReceivingPipeLocked(face, port)));
         getBlockEntityLevel().playSound(null, getBlockPos(),
             SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, isReceivingPipeLocked(face, port) ? 0.5f : 0.6f);
     }

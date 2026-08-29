@@ -4,7 +4,8 @@ import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.item.ReadOnlyMemoryModuleItem;
 import li.cil.tis3d.common.module.RandomAccessMemoryModule;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.common.network.message.ServerReadOnlyMemoryModuleDataMessage;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.common.CommonMessages;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -51,8 +52,7 @@ public final class ReadOnlyMemoryModuleMenu extends AbstractContainerMenu {
 
             if (!Arrays.equals(scratchData, lastSentData)) {
                 lastSentData = scratchData;
-                final ServerReadOnlyMemoryModuleDataMessage message = new ServerReadOnlyMemoryModuleDataMessage(hand, scratchData);
-                Network.sendToPlayer(serverPlayer, message);
+                MessageSender.sendToPlayer(serverPlayer, new CommonMessages.ROMData(scratchData, hand));
             }
         }
     }

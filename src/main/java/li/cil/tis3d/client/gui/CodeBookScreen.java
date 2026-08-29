@@ -10,7 +10,8 @@ import li.cil.tis3d.common.module.execution.MachineState;
 import li.cil.tis3d.common.module.execution.compiler.Compiler;
 import li.cil.tis3d.common.module.execution.compiler.ParseException;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.common.network.message.CodeBookDataMessage;
+import li.cil.tis3d.common.network.message.MessageSender;
+import li.cil.tis3d.common.network.message.c2s.C2SMessages;
 import li.cil.tis3d.util.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -122,7 +123,7 @@ public final class CodeBookScreen extends Screen {
         saveProgram();
 
         // Save any changes made and send them to the server.
-        Network.sendToServer(new CodeBookDataMessage(hand, data.toImmutable()));
+        MessageSender.sendToServer(new C2SMessages.CodeBook(data.toImmutable(), hand));
     }
 
     @Override
