@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#c:gems/quartz",
+    "#c:dusts/redstone",
+    "#c:gems/lapis",
+    "#c:gems/emerald"
+  ],
+  "result": {
+    "count": 1,
+    "id": "tis3d:prism"
+  }
+}

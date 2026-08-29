@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "#c:ingots/iron",
+    "P": "#c:glass_panes/colorless",
+    "R": "#c:dusts/redstone",
+    "S": "#c:ingots/gold"
+  },
+  "pattern": [
+    "PPP",
+    "ISI",
+    " R "
+  ],
+  "result": {
+    "count": 2,
+    "id": "tis3d:execution_module"
+  }
+}

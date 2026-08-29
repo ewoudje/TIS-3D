@@ -1,27 +1,21 @@
 {
-    "parent": "block/block",
-    "elements": [
-        {
-            "from": [
-                0,
-                0,
-                0
-            ],
-            "to": [
-                16,
-                16,
-                16
-            ],
-            "faces": {
-                "south": {
-                    "texture": "#module",
-                    "cullface": "south"
-                }
-            }
-        }
-    ],
-    "textures": {
-        "module": "tis3d:block/casing_module",
-        "particle": "tis3d:block/casing_module"
-    }
+	"parent": "block/block",
+	"textures": {
+		"particle": "tis3d:block/casing_module",
+		"module": "tis3d:block/casing_module"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 16, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#module", "cullface": "north"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#module", "cullface": "east"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#module", "cullface": "south"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#module", "cullface": "west"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#module", "cullface": "up"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#module", "cullface": "down"}
+			}
+		}
+	]
 }
