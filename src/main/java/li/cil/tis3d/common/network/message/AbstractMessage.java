@@ -1,6 +1,7 @@
 package li.cil.tis3d.common.network.message;
 
 import com.mojang.logging.LogUtils;
+import li.cil.tis3d.api.ClientAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -11,7 +12,6 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 
-//TODO has to be rewritten to handle the messages somewhere else, crashes because of getClientLevel
 public abstract class AbstractMessage implements CustomPacketPayload {
     protected static final Logger LOGGER = LogUtils.getLogger();
 
@@ -38,6 +38,7 @@ public abstract class AbstractMessage implements CustomPacketPayload {
 
     @Nullable
     protected Level getClientLevel() {
-        return Minecraft.getInstance().level;
+        // Has to happen to not load ClientLevel on the server
+        return ClientAPI.getClientLevel();
     }
 }

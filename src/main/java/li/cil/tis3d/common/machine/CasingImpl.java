@@ -177,7 +177,9 @@ public final class CasingImpl implements Casing {
             module.onEnabled();
         }
 
-        CasingBlockEntityRenderer.update(blockEntity);
+        if (getCasingLevel().isClientSide())
+            CasingBlockEntityRenderer.update(blockEntity);
+
         blockEntity.setChanged();
     }
 
