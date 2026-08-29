@@ -5,7 +5,7 @@ import li.cil.manual.api.ManualScreenStyle;
 import li.cil.manual.api.ManualStyle;
 import li.cil.manual.api.prefab.item.AbstractManualItem;
 import li.cil.tis3d.client.manual.Manuals;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.client.renderer.font.NormalFontRenderer;
 import li.cil.tis3d.util.TooltipUtils;
 import net.minecraft.client.renderer.Rect2i;
@@ -58,17 +58,17 @@ public final class ManualItem extends AbstractManualItem {
         return new ManualScreenStyle() {
             @Override
             public Identifier getWindowBackground() {
-                return Textures.LOCATION_GUI_MANUAL_BACKGROUND;
+                return ModTextures.LOCATION_GUI_MANUAL_BACKGROUND;
             }
 
             @Override
             public Identifier getScrollButtonTexture() {
-                return Textures.LOCATION_GUI_MANUAL_SCROLL;
+                return ModTextures.LOCATION_GUI_MANUAL_SCROLL;
             }
 
             @Override
             public Identifier getTabButtonTexture() {
-                return Textures.LOCATION_GUI_MANUAL_TAB;
+                return ModTextures.LOCATION_GUI_MANUAL_TAB;
             }
 
             @Override

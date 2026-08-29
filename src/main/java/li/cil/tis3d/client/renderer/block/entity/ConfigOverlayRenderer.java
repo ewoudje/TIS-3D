@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.api.util.TransformUtil;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.BlockHitResult;
@@ -26,8 +26,8 @@ public class ConfigOverlayRenderer {
             final Port lookingAtPort;
             final boolean isLookingAt = context.isLookingAt();
             if (isLookingAt) {
-                closedSprite = Textures.LOCATION_OVERLAY_CASING_PORT_CLOSED;
-                openSprite = Textures.LOCATION_OVERLAY_CASING_PORT_OPEN;
+                closedSprite = ModTextures.LOCATION_OVERLAY_CASING_PORT_CLOSED;
+                openSprite = ModTextures.LOCATION_OVERLAY_CASING_PORT_OPEN;
 
                 final HitResult hit = context.getHitResult();
                 assert hit.getType() == HitResult.Type.BLOCK : "renderer.cameraHitResult.getType() is not of type BLOCK even though it was in isObserverLookingAt";
@@ -37,7 +37,7 @@ public class ConfigOverlayRenderer {
                 final Vec3 uv = TransformUtil.hitToUV(context.getFace(), blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ()));
                 lookingAtPort = Port.fromUVQuadrant(uv);
             } else {
-                closedSprite = Textures.LOCATION_OVERLAY_CASING_PORT_CLOSED_SMALL;
+                closedSprite = ModTextures.LOCATION_OVERLAY_CASING_PORT_CLOSED_SMALL;
                 openSprite = null;
 
                 lookingAtPort = null;
@@ -53,7 +53,7 @@ public class ConfigOverlayRenderer {
                 }
 
                 if (port == lookingAtPort) {
-                    context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_CASING_PORT_HIGHLIGHT);
+                    context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_CASING_PORT_HIGHLIGHT);
                 }
 
                 matrixStack.translate(0.5, 0.5, 0.5);
@@ -66,9 +66,9 @@ public class ConfigOverlayRenderer {
         } else {
             final Identifier sprite;
             if (context.isLocked()) {
-                sprite = Textures.LOCATION_OVERLAY_CASING_LOCKED;
+                sprite = ModTextures.LOCATION_OVERLAY_CASING_LOCKED;
             } else {
-                sprite = Textures.LOCATION_OVERLAY_CASING_UNLOCKED;
+                sprite = ModTextures.LOCATION_OVERLAY_CASING_UNLOCKED;
             }
 
             context.drawAtlasQuadUnlit(sprite);

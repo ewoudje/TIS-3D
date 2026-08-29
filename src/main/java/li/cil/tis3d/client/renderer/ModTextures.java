@@ -3,7 +3,7 @@ package li.cil.tis3d.client.renderer;
 import li.cil.tis3d.api.API;
 import net.minecraft.resources.Identifier;
 
-public final class Textures {
+public final class ModTextures {
     public static final Identifier LOCATION_GUI_BOOK_CODE_BACKGROUND = API.resource("textures/gui/code_book.png");
     public static final Identifier LOCATION_GUI_MANUAL_BACKGROUND = API.resource("textures/gui/manual.png");
     public static final Identifier LOCATION_GUI_MANUAL_TAB = API.resource("textures/gui/manual_tab.png");
@@ -36,6 +36,6 @@ public final class Textures {
 
     // --------------------------------------------------------------------- //
 
-    private Textures() {
+    private ModTextures() {
     }
 }

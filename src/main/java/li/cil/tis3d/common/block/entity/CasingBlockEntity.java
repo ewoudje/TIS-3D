@@ -8,9 +8,12 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Pipe;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
+import li.cil.tis3d.api.module.ModuleRenderer;
 import li.cil.tis3d.api.module.traits.ModuleWithBlockChangeListener;
 import li.cil.tis3d.api.module.traits.ModuleWithRedstone;
 import li.cil.tis3d.api.module.traits.ModuleWithRotation;
+import li.cil.tis3d.client.models.ModModels;
+import li.cil.tis3d.client.models.ModuleModelData;
 import li.cil.tis3d.common.config.CommonConfig;
 import li.cil.tis3d.common.inventory.CasingInventory;
 import li.cil.tis3d.common.inventory.SidedInventoryProxy;
@@ -47,7 +50,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
@@ -542,24 +544,18 @@ public final class CasingBlockEntity extends ComputerBlockEntity implements Side
             return modelData;
         }
 
-        /* TODO
-        final ModuleBakedModel.CasingModules data = new ModuleBakedModel.CasingModules();
+        final ModuleModelData[] data = new ModuleModelData[6];
         for (final Face face : Face.VALUES) {
             final Module module = casing.getModule(face);
-            if (module instanceof final ModuleWithBakedModel moduleWithModel) {
-                if (moduleWithModel.hasModel()) {
-                    data.setModule(face, moduleWithModel, moduleWithModel.getModelData(level, getBlockPos(), getBlockState(), modelData));
-                }
+            if (module != null) {
+                data[face.ordinal()] = ModuleRenderer.findRenderer(module)
+                    .getModelData(level, getBlockPos(), getBlockState(), module);
             }
         }
 
-        if (!data.isEmpty()) {
-            return ModelData.builder()
-                .with(ModuleBakedModel.CasingModules.CASING_MODULES_PROPERTY, data)
-                .build();
-        }*/
-
-        return modelData;
+        return ModelData.builder()
+            .with(ModModels.MODULE_MODEL_DATA_PROPERTY, data)
+            .build();
     }
 
     @Nullable

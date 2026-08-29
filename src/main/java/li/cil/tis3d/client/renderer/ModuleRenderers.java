@@ -42,10 +42,10 @@ public class ModuleRenderers {
         MODULE_RENDERERS.register("timer", TimerModuleRenderer::new);
         MODULE_RENDERERS.register("keypad", KeypadModuleRenderer::new);
 
-        registerTexture("audio", Textures.LOCATION_OVERLAY_MODULE_AUDIO, AudioModule.class);
-        registerTexture("infrared", Textures.LOCATION_OVERLAY_MODULE_INFRARED, InfraredModule.class);
-        registerTexture("random", Textures.LOCATION_OVERLAY_MODULE_RANDOM, RandomModule.class);
-        registerTexture("serial_port", Textures.LOCATION_OVERLAY_MODULE_SERIAL_PORT, SerialPortModule.class);
+        registerTexture("audio", ModTextures.LOCATION_OVERLAY_MODULE_AUDIO, AudioModule.class);
+        registerTexture("infrared", ModTextures.LOCATION_OVERLAY_MODULE_INFRARED, InfraredModule.class);
+        registerTexture("random", ModTextures.LOCATION_OVERLAY_MODULE_RANDOM, RandomModule.class);
+        registerTexture("serial_port", ModTextures.LOCATION_OVERLAY_MODULE_SERIAL_PORT, SerialPortModule.class);
 
         MODULE_RENDERERS.register(eventBus);
     }

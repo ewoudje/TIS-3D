@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.module.KeypadModule;
 import li.cil.tis3d.util.Color;
 import net.minecraft.world.phys.Vec3;
@@ -37,7 +37,7 @@ public class KeypadModuleRenderer extends AbstractModuleWithRotationRenderer<Key
 
         // Draw base texture. Draw half transparent while writing current value,
         // i.e. while no input is possible.
-        context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_KEYPAD, Color.withAlpha(Color.WHITE, value.isPresent() ? 0.5f : 1f));
+        context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_MODULE_KEYPAD, Color.withAlpha(Color.WHITE, value.isPresent() ? 0.5f : 1f));
 
         // Draw overlay for hovered button if we can currently input a value.
 

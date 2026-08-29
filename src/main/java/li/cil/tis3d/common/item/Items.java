@@ -13,7 +13,6 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public final class Items {
     private static final DeferredRegister<Item> ITEMS = RegistryUtils.getDeferred(Registries.ITEM);

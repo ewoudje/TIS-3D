@@ -2,41 +2,27 @@ package li.cil.tis3d.common.module;
 
 import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.machine.Face;
-import li.cil.tis3d.api.module.traits.ModuleWithBakedModel;
 import li.cil.tis3d.api.module.traits.ModuleWithBlockChangeListener;
 import li.cil.tis3d.api.prefab.module.AbstractModule;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.util.BlockStateUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.model.data.ModelData;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.OptionalInt;
 
-public final class FacadeModule extends AbstractModule implements ModuleWithBlockChangeListener, ModuleWithBakedModel {
+public final class FacadeModule extends AbstractModule implements ModuleWithBlockChangeListener {
     // --------------------------------------------------------------------- //
     // Persisted data
 
@@ -131,40 +117,10 @@ public final class FacadeModule extends AbstractModule implements ModuleWithBloc
     }
 
     // --------------------------------------------------------------------- //
-    // CasingFaceQuadOverride
 
-    @Override
-    public boolean hasModel() {
-        return facadeState != null;
+    public @Nullable BlockState getFacadeState() {
+        return facadeState;
     }
-
-    @Override
-    public OptionalInt getTintColor(@Nullable final BlockAndTintGetter level, @Nullable final BlockPos pos, final int tintIndex) {
-        return OptionalInt.of(Minecraft.getInstance().getBlockColors().getColor(facadeState, level, pos, tintIndex));
-    }
-
-    // --------------------------------------------------------------------- //
-    // ModuleWithBakedModel
-
-    @Override
-    public ModelData getModelData(final BlockAndTintGetter level, final BlockPos pos, final BlockState state, final ModelData data) {
-        final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
-        return data; //TODO model.getModelData(level, pos, facadeState, data);
-    }
-
-    @Override
-    public List<BakedQuad> getQuads(@Nullable final BlockState state, @Nullable final Direction face, final RandomSource random, final ModelData data, final @Nullable RenderType renderType) {
-        final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
-        return List.of(); //TODO model.getQuads(facadeState, face, random, data, renderType);
-    }
-
-    // @Override
-    // public ChunkRenderTypeSet getRenderTypes(final RandomSource random, final ModelData data) {
-    //     final var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(facadeState);
-    //     return model.getRenderTypes(facadeState, random, data);
-    //}
-
-    // --------------------------------------------------------------------- //
 
     private boolean trySetFacadeState(final BlockState state) {
         if (state.getRenderShape() != RenderShape.MODEL

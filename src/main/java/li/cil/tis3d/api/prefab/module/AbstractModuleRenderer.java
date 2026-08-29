@@ -4,7 +4,10 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
+import li.cil.tis3d.client.models.ModuleModelData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -60,5 +63,10 @@ public abstract class AbstractModuleRenderer<T extends Module> implements Module
         }
 
         return hitResult.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    @Override
+    public @Nullable ModuleModelData getModelData(@Nullable Level level, BlockPos blockPos, BlockState blockState, T module) {
+        return ModuleModelData.CLASSIC;
     }
 }

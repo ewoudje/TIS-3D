@@ -3,7 +3,12 @@ package li.cil.tis3d.client.renderer.module;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
+import li.cil.tis3d.client.models.ModuleModelData;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jspecify.annotations.Nullable;
 
 public class TextureModuleRenderer<T extends Module> implements ModuleRenderer<T> {
     private final Identifier texture;
@@ -26,5 +31,10 @@ public class TextureModuleRenderer<T extends Module> implements ModuleRenderer<T
         }
 
         context.drawAtlasQuadLit(texture);
+    }
+
+    @Override
+    public @Nullable ModuleModelData getModelData(@Nullable Level level, BlockPos blockPos, BlockState blockState, T module) {
+        return ModuleModelData.CLASSIC;
     }
 }

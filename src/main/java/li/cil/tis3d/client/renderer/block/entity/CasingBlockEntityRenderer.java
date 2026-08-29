@@ -5,18 +5,15 @@ import li.cil.tis3d.api.machine.Face;
 import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleRenderer;
-import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.api.util.TransformUtil;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.client.renderer.RenderModuleState;
-import li.cil.tis3d.client.renderer.Textures;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.item.Items;
 import li.cil.tis3d.common.network.Network;
-import li.cil.tis3d.util.RegistryUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -25,10 +22,7 @@ import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,10 +30,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -58,11 +49,16 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
     private final static Set<Class<?>> BLACKLIST = new HashSet<>();
     private static final int DETAIL_RENDER_RANGE = 8;
     private static final int KINDA_CLOSE_RANGE = 16;
-    private final static Map<Module, ModuleRenderer<?>> RENDERERS = new HashMap<>();
-    private final BlockEntityRenderDispatcher renderer;
 
     public CasingBlockEntityRenderer(final BlockEntityRendererProvider.Context context) {
-        renderer = context.blockEntityRenderDispatcher();
+
+    }
+
+    public static void update(CasingBlockEntity blockEntity) {
+        if (blockEntity.getLevel() instanceof ClientLevel level) {
+            blockEntity.requestModelDataUpdate();
+            level.sendBlockUpdated(blockEntity.getBlockPos(), blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+        }
     }
 
     @Override
@@ -93,7 +89,7 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
         for (Face f : Face.VALUES) {
             var module = renderState.modules[f.ordinal()] = blockEntity.getModule(f);
             if (module != null) {
-                renderState.renderers[f.ordinal()] = findRenderer(module);
+                renderState.renderers[f.ordinal()] = ModuleRenderer.findRenderer(module);
                 renderState.light[f.ordinal()] = LevelRenderer.getLightColor(blockEntity.getLevel(), blockEntity.getBlockPos());
 
                 for (final Port port : Port.VALUES) {
@@ -177,13 +173,13 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
         matrixStack.scale(-1, -1, 1);
     }
 
-    public static void drawModuleOverlay(final RenderModuleState state) {
+    private void drawModuleOverlay(final RenderModuleState state) {
         final PoseStack matrixStack = state.getMatrixStack();
         matrixStack.pushPose();
         for (final Port port : Port.CLOCKWISE) {
             final boolean isClosed = state.isReceivingPipeLocked(port);
             if (isClosed) {
-                state.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_CASING_PORT_CLOSED_SMALL);
+                state.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_CASING_PORT_CLOSED_SMALL);
             }
 
             matrixStack.translate(0.5, 0.5, 0.5);
@@ -218,13 +214,5 @@ public final class CasingBlockEntityRenderer implements BlockEntityRenderer<Casi
         }
 
         return false;
-    }
-
-    private ModuleRenderer<Module> findRenderer(final Module module) {
-        return (ModuleRenderer<Module>) RENDERERS.computeIfAbsent(module, m ->
-            RegistryUtils.get(ModuleRenderer.REGISTRY).stream()
-                .filter(r -> r.matches(m))
-                .findAny()
-                .orElseThrow());
     }
 }

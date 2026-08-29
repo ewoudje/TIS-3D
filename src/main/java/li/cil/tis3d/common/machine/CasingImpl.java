@@ -9,6 +9,7 @@ import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleProvider;
 import li.cil.tis3d.api.module.traits.ModuleWithRedstone;
+import li.cil.tis3d.client.renderer.block.entity.CasingBlockEntityRenderer;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.block.entity.ControllerBlockEntity;
 import li.cil.tis3d.common.item.DataComponentTypes;
@@ -18,7 +19,6 @@ import li.cil.tis3d.common.provider.ModuleProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -177,6 +177,7 @@ public final class CasingImpl implements Casing {
             module.onEnabled();
         }
 
+        CasingBlockEntityRenderer.update(blockEntity);
         blockEntity.setChanged();
     }
 

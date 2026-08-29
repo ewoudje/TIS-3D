@@ -1,8 +1,7 @@
 package li.cil.tis3d.client.gui;
 
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.ClientAPI;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.container.ReadOnlyMemoryModuleMenu;
 import li.cil.tis3d.common.module.RandomAccessMemoryModule;
 import li.cil.tis3d.common.network.Network;
@@ -13,9 +12,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.lwjgl.glfw.GLFW;
@@ -87,7 +84,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
     protected void renderBg(final GuiGraphics graphics, final float partialTicks, final int x, final int y) {
         graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            Textures.LOCATION_GUI_MEMORY,
+            ModTextures.LOCATION_GUI_MEMORY,
             leftPos, topPos,
             0, 0,
             imageWidth, imageHeight,
@@ -311,7 +308,7 @@ public final class ReadOnlyMemoryModuleScreen extends AbstractContainerScreen<Re
         final int vPos = level != null ? (int) (level.getGameTime() % 16) * 8 : 0;
         graphics.blit(
             RenderPipelines.GUI_TEXTURED,
-            Textures.LOCATION_GUI_MEMORY,
+            ModTextures.LOCATION_GUI_MEMORY,
             0, 0,
             256 - (CELL_WIDTH + 1), vPos,
             11, 8,

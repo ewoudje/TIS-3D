@@ -2,7 +2,7 @@ package li.cil.tis3d.client.gui;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import li.cil.tis3d.client.ClientConfig;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.config.Constants;
 import li.cil.tis3d.common.item.CodeBookItem;
 import li.cil.tis3d.common.item.Items;
@@ -129,7 +129,7 @@ public final class CodeBookScreen extends Screen {
     public void renderBackground(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTicks) {
         super.renderBackground(graphics, mouseX, mouseY, partialTicks);
 
-        graphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND, guiX, guiY, 0f, 0f, GUI_WIDTH, GUI_HEIGHT, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, ModTextures.LOCATION_GUI_BOOK_CODE_BACKGROUND, guiX, guiY, 0f, 0f, GUI_WIDTH, GUI_HEIGHT, 256, 256);
     }
 
     @Override
@@ -740,7 +740,7 @@ public final class CodeBookScreen extends Screen {
         protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
             final int offsetX = isHoveredOrFocusedUsingKeyboard() ? BUTTON_WIDTH : 0;
             final int offsetY = type == PageChangeType.Previous ? BUTTON_HEIGHT : 0;
-            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ModTextures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
                 getX(), getY(),
                 TEXTURE_X + offsetX, TEXTURE_Y + offsetY,
                 BUTTON_WIDTH, BUTTON_HEIGHT,
@@ -768,7 +768,7 @@ public final class CodeBookScreen extends Screen {
         @Override
         protected void renderContents(GuiGraphics guiGraphics, int i, int i1, float v) {
             final int offsetX = isHoveredOrFocusedUsingKeyboard() ? BUTTON_WIDTH : 0;
-            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Textures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
+            guiGraphics.blit(RenderPipelines.GUI_TEXTURED, ModTextures.LOCATION_GUI_BOOK_CODE_BACKGROUND,
                 getX(), getY(),
                 TEXTURE_X + offsetX, TEXTURE_Y,
                 BUTTON_WIDTH, BUTTON_HEIGHT,

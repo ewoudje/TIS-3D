@@ -2,8 +2,16 @@ package li.cil.tis3d.api.module;
 
 import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.util.ModuleRenderContext;
+import li.cil.tis3d.client.models.ModuleModelData;
+import li.cil.tis3d.util.RegistryUtils;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jspecify.annotations.Nullable;
+
+import java.util.WeakHashMap;
 
 public interface ModuleRenderer<T extends Module> {
     //TODO should be changed to the state approach that is now used
@@ -35,4 +43,14 @@ public interface ModuleRenderer<T extends Module> {
      */
     void render(final T module, final ModuleRenderContext context);
 
+    @Nullable ModuleModelData getModelData(@Nullable Level level, BlockPos blockPos, BlockState blockState, T module);
+
+    WeakHashMap<Module, ModuleRenderer<?>> CACHED_RENDERERS = new WeakHashMap<>();
+    static ModuleRenderer<Module> findRenderer(final Module module) {
+        return (ModuleRenderer<Module>) CACHED_RENDERERS.computeIfAbsent(module, m ->
+            RegistryUtils.get(ModuleRenderer.REGISTRY).stream()
+                .filter(r -> r.matches(m))
+                .findAny()
+                .orElseThrow());
+    }
 }

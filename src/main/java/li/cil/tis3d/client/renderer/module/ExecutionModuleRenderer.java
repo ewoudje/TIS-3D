@@ -2,12 +2,11 @@ package li.cil.tis3d.client.renderer.module;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.module.ExecutionModule;
 import li.cil.tis3d.common.module.execution.ExecutionState;
 import li.cil.tis3d.common.module.execution.MachineState;
@@ -122,10 +121,10 @@ public class ExecutionModuleRenderer extends AbstractModuleWithRotationRenderer<
 
     private static final class RenderData {
         private static final Identifier[] STATE_LOCATIONS = new Identifier[]{
-            Textures.LOCATION_OVERLAY_MODULE_EXECUTION_IDLE,
-            Textures.LOCATION_OVERLAY_MODULE_EXECUTION_ERROR,
-            Textures.LOCATION_OVERLAY_MODULE_EXECUTION_RUNNING,
-            Textures.LOCATION_OVERLAY_MODULE_EXECUTION_WAITING
+            ModTextures.LOCATION_OVERLAY_MODULE_EXECUTION_IDLE,
+            ModTextures.LOCATION_OVERLAY_MODULE_EXECUTION_ERROR,
+            ModTextures.LOCATION_OVERLAY_MODULE_EXECUTION_RUNNING,
+            ModTextures.LOCATION_OVERLAY_MODULE_EXECUTION_WAITING
         };
     }
 }

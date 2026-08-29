@@ -5,7 +5,7 @@ import li.cil.tis3d.api.machine.Casing;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.module.SequencerModule;
 import li.cil.tis3d.util.Color;
 import net.minecraft.world.phys.Vec3;
@@ -59,7 +59,7 @@ public class SequencerModuleRenderer extends AbstractModuleWithRotationRenderer<
         }
 
         // Draw base grid of sequencer entries.
-        context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_SEQUENCER, Color.withAlpha(Color.WHITE, enabled ? 1f : 0.5f));
+        context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_MODULE_SEQUENCER, Color.withAlpha(Color.WHITE, enabled ? 1f : 0.5f));
 
         if (context.closeEnoughForDetails()) {
             // Draw configuration of sequencer.

@@ -2,12 +2,11 @@ package li.cil.tis3d.client.renderer.module;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.manual.api.render.FontRenderer;
-import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.ClientAPI;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.module.TimerModule;
 import li.cil.tis3d.util.Color;
 
@@ -28,7 +27,7 @@ public class TimerModuleRenderer extends AbstractModuleWithRotationRenderer<Time
         matrixStack.pushPose();
         rotateForRendering(module, matrixStack);
 
-        context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_TIMER);
+        context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_MODULE_TIMER);
 
         // Render detailed state when player is close.
         if (!module.hasElapsed() && context.closeEnoughForDetails()) {

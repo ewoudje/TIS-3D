@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.prefab.module.AbstractModuleWithRotationRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
-import li.cil.tis3d.client.renderer.Textures;
+import li.cil.tis3d.client.renderer.ModTextures;
 import li.cil.tis3d.common.module.RedstoneModule;
 import li.cil.tis3d.util.Color;
 
@@ -35,7 +35,7 @@ public class RedstoneModuleRenderer extends AbstractModuleWithRotationRenderer<R
         rotateForRendering(module, matrixStack);
 
         // Draw base overlay.
-        context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_REDSTONE);
+        context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_MODULE_REDSTONE);
 
         if (!module.getCasing().isEnabled()) {
             matrixStack.popPose();
@@ -46,7 +46,7 @@ public class RedstoneModuleRenderer extends AbstractModuleWithRotationRenderer<R
         final float relativeOutput = module.getRedstoneOutput() / 15f;
         final float heightOutput = relativeOutput * SHARED_H;
         final float v0Output = SHARED_Y - heightOutput;
-        context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_REDSTONE_BARS,
+        context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_MODULE_REDSTONE_BARS,
             OUTPUT_X, v0Output, SHARED_W, heightOutput,
             OUTPUT_X, v0Output, OUTPUT_X + SHARED_W, v0Output + heightOutput,
             Color.WHITE);
@@ -55,7 +55,7 @@ public class RedstoneModuleRenderer extends AbstractModuleWithRotationRenderer<R
         final float relativeInput = module.getRedstoneInput() / 15f;
         final float heightInput = relativeInput * SHARED_H;
         final float v0Input = SHARED_Y - heightInput;
-        context.drawAtlasQuadUnlit(Textures.LOCATION_OVERLAY_MODULE_REDSTONE_BARS,
+        context.drawAtlasQuadUnlit(ModTextures.LOCATION_OVERLAY_MODULE_REDSTONE_BARS,
             INPUT_X, v0Input, SHARED_W, heightInput,
             INPUT_X, v0Input, INPUT_X + SHARED_W, v0Input + heightInput,
             Color.WHITE);

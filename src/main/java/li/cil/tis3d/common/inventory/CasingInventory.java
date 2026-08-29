@@ -6,7 +6,6 @@ import li.cil.tis3d.api.machine.Port;
 import li.cil.tis3d.api.module.Module;
 import li.cil.tis3d.api.module.ModuleProvider;
 import li.cil.tis3d.api.module.traits.ModuleWithRotation;
-import li.cil.tis3d.common.block.CasingBlock;
 import li.cil.tis3d.common.block.entity.CasingBlockEntity;
 import li.cil.tis3d.common.network.Network;
 import li.cil.tis3d.common.network.message.CasingInventoryMessage;
@@ -16,9 +15,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.TagValueOutput;
 import org.slf4j.Logger;
 
@@ -68,15 +64,6 @@ public final class CasingInventory extends Inventory implements WorldlyContainer
     @Override
     public void setChanged() {
         blockEntity.setChanged();
-        final Level level = blockEntity.getBlockEntityLevel();
-        if (!level.isClientSide()) {
-            BlockState state = blockEntity.getBlockState();
-            for (final Face face : Face.VALUES) {
-                final BooleanProperty property = CasingBlock.FACE_TO_PROPERTY.get(face);
-                state = state.setValue(property, !items[face.ordinal()].isEmpty());
-            }
-            level.setBlockAndUpdate(blockEntity.getBlockPos(), state);
-        }
     }
 
     // --------------------------------------------------------------------- //
