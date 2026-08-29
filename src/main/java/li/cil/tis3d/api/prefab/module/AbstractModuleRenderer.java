@@ -6,6 +6,7 @@ import li.cil.tis3d.api.module.ModuleRenderer;
 import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.models.ModuleModelData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -14,6 +15,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
+import java.util.OptionalInt;
 
 public abstract class AbstractModuleRenderer<T extends Module> implements ModuleRenderer<T> {
 
@@ -68,5 +70,10 @@ public abstract class AbstractModuleRenderer<T extends Module> implements Module
     @Override
     public @Nullable ModuleModelData getModelData(@Nullable Level level, BlockPos blockPos, BlockState blockState, T module) {
         return ModuleModelData.CLASSIC;
+    }
+
+    @Override
+    public OptionalInt getTintColor(@org.jspecify.annotations.Nullable BlockAndTintGetter level, @org.jspecify.annotations.Nullable BlockPos pos, int tintIndex, T module) {
+        return OptionalInt.empty();
     }
 }

@@ -6,9 +6,12 @@ import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.models.ModuleModelData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
+
+import java.util.OptionalInt;
 
 public class TextureModuleRenderer<T extends Module> implements ModuleRenderer<T> {
     private final Identifier texture;
@@ -36,5 +39,10 @@ public class TextureModuleRenderer<T extends Module> implements ModuleRenderer<T
     @Override
     public @Nullable ModuleModelData getModelData(@Nullable Level level, BlockPos blockPos, BlockState blockState, T module) {
         return ModuleModelData.CLASSIC;
+    }
+
+    @Override
+    public OptionalInt getTintColor(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, int tintIndex, T module) {
+        return OptionalInt.empty();
     }
 }

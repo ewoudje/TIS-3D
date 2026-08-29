@@ -4,13 +4,16 @@ import li.cil.tis3d.api.API;
 import li.cil.tis3d.api.util.ModuleRenderContext;
 import li.cil.tis3d.client.models.ModuleModelData;
 import li.cil.tis3d.util.RegistryUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
+import java.util.OptionalInt;
 import java.util.WeakHashMap;
 
 public interface ModuleRenderer<T extends Module> {
@@ -44,6 +47,8 @@ public interface ModuleRenderer<T extends Module> {
     void render(final T module, final ModuleRenderContext context);
 
     @Nullable ModuleModelData getModelData(@Nullable Level level, BlockPos blockPos, BlockState blockState, T module);
+
+    OptionalInt getTintColor(@Nullable final BlockAndTintGetter level, @Nullable final BlockPos pos, final int tintIndex, T module);
 
     WeakHashMap<Module, ModuleRenderer<?>> CACHED_RENDERERS = new WeakHashMap<>();
     static ModuleRenderer<Module> findRenderer(final Module module) {
